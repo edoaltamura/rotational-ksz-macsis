@@ -15,7 +15,7 @@ class Macsis:
 
         # Sort halos by index number
         halos_list = os.listdir(self.cosma_repository)
-        halos_list = [i for i in halos_list if i.startswith('halo') and os.path.isdir(i)]
+        halos_list = [i for i in halos_list if i.startswith('halo')]
         halos_list.sort(key=lambda x: int(x[-4:]))
 
         # Load halos data directory and instances of Zoom
