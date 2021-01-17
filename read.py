@@ -52,12 +52,6 @@ class MacsisDataset(object):
     def read_catalogue_particles(self, dataset_path: str):
         return self.read_dataset('catalogue_particles_file', dataset_path)
 
-    def __del__(self):
-        self.snapshot_file.close()
-        self.catalogue_grouptab_file.close()
-        self.catalogue_subfindtab_file.close()
-        self.catalogue_particles_file.close()
-
 
 if __name__ == "__main__":
     from register import Macsis
