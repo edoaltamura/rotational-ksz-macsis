@@ -15,6 +15,7 @@ class Macsis:
 
         # Sort halos by index number
         halos_list = os.listdir(self.cosma_repository)
+        halos_list = [i for i in halos_list if i.startswith('halo') and os.path.isdir(i)]
         halos_list.sort(key=lambda x: int(x[-4:]))
 
         # Load halos data directory and instances of Zoom
@@ -22,13 +23,12 @@ class Macsis:
         self.zooms_list = []
 
         for zoom_dir in tqdm(halos_list, desc=f"Fetching zoom objects", disable=SILENT_PROGRESSBAR):
-            if zoom_dir.startswith('halo') and os.path.isdir(zoom_dir):
-                self.halo_paths.append(
-                    os.path.join(self.cosma_repository, zoom_dir)
-                )
-                self.zooms_list.append(
-                    Zoom(os.path.join(self.cosma_repository, zoom_dir))
-                )
+            self.halo_paths.append(
+                os.path.join(self.cosma_repository, zoom_dir)
+            )
+            self.zooms_list.append(
+                Zoom(os.path.join(self.cosma_repository, zoom_dir))
+            )
 
     def get_zoom(self, index: int):
 
