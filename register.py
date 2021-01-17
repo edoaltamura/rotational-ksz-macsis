@@ -20,6 +20,7 @@ class Macsis:
 
         # Load halos data directories
         self.halo_paths = [os.path.join(self.cosma_repository, i) for i in halos_list]
+        self.num_zooms = len(self.halo_paths)
 
     def get_zoom(self, index: int):
         assert len(self.halo_paths) > 0
