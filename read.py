@@ -61,3 +61,4 @@ if __name__ == "__main__":
         halo_handle = macsis.get_zoom(i).get_redshift(-1)
         data = MacsisDataset(halo_handle)
         print(data.read_snapshot('PartType0/Temperature'))
+        print(data.read_catalogue_subfindtab('FOF/GroupCentreOfPotential'))
