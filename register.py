@@ -18,34 +18,24 @@ class Macsis:
         halos_list = [i for i in halos_list if i.startswith('halo')]
         halos_list.sort(key=lambda x: int(x[-4:]))
 
-        # Load halos data directory and instances of Zoom
-        self.halo_paths = []
-        self.zooms_list = []
-
-        for zoom_dir in tqdm(halos_list, desc=f"Fetching zoom objects", disable=SILENT_PROGRESSBAR):
-            self.halo_paths.append(
-                os.path.join(self.cosma_repository, zoom_dir)
-            )
-            self.zooms_list.append(
-                Zoom(os.path.join(self.cosma_repository, zoom_dir))
-            )
+        # Load halos data directories
+        self.halo_paths = [os.path.join(self.cosma_repository, i) for i in halos_list]
 
     def get_zoom(self, index: int):
-
+        assert len(self.halo_paths) > 0
         try:
-            zoom_select = self.zooms_list[index]
+            directory_select = self.halo_paths[index]
         except IndexError as err:
             print((
                 f"Trying to access zoom object with output index {index:d}, "
-                f"but the maximum index available is {len(self.zooms_list) - 1:d}."
+                f"but the maximum index available is {len(self.halo_paths) - 1:d}."
             ))
             raise err
 
-        return zoom_select
+        return Zoom(directory_select)
 
 
 class Redshift(object):
-
     __slots__ = (
         'scale_factor',
         'a',
