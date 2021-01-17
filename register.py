@@ -159,7 +159,7 @@ class Zoom(object):
         redshift_info['catalogue_subfindtab_path'] = self.catalogue_grouptab_paths[index]
         redshift_info['catalogue_particles_path'] = self.catalogue_particles_paths[index]
 
-        print(redshift_info)
+        print(f"{index:03d}")
 
         assert f"{index:03d}" in os.path.basename(redshift_info['snapshot_path'])
         assert f"{index:03d}" in os.path.basename(redshift_info['catalogue_grouptab_path'])
