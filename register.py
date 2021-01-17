@@ -1,9 +1,7 @@
 import os
 import numpy as np
-from tqdm import tqdm
 
 Tcut_halogas = 1.e5  # Hot gas temperature threshold in K
-SILENT_PROGRESSBAR = False
 
 
 class Macsis:
