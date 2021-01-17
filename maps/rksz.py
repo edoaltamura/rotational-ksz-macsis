@@ -72,7 +72,7 @@ for i in range(3):
 
 compton_y = unyt.unyt_array(
     masses * velocities_rest_frame[:, 2], 1.e10 * unyt.Solar_Mass * 1.e3 * unyt.km / unyt.s
-) * ksz_const / unyt.unyt_quantity(1., unyt.Mpc)
+) * ksz_const / unyt.unyt_quantity(1., unyt.Mpc) ** 2
 
 
 print(compton_y)
