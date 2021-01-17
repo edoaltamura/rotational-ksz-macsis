@@ -43,7 +43,6 @@ def rotate_coordinates(coord: np.ndarray, angular_momentum_hot_gas: np.ndarray, 
         new_coord = np.einsum('ijk,ik->ij', face_on_rotation_matrix, coord)
     elif tilt == 'edgeon':
         edge_on_rotation_matrix = rotation_matrix_from_vector(angular_momentum_hot_gas, axis='y')
-        print(edge_on_rotation_matrix)
         new_coord = np.einsum('ijk,ik->ij', edge_on_rotation_matrix, coord)
 
     return new_coord
@@ -116,6 +115,7 @@ for i in range(3):
     velocities_rest_frame[:, i] -= mean_velocity_r500[i]
 
 # Rotate coordinates and velocities
+print(coordinates)
 coordinates_edgeon = rotate_coordinates(coordinates, angular_momentum_r500, tilt='edgeon')
 velocities_rest_frame_edgeon = rotate_coordinates(velocities_rest_frame, angular_momentum_r500, tilt='edgeon')
 
