@@ -66,4 +66,13 @@ radial_dist = np.sqrt(
 r500_mask = np.where(radial_dist < r500_crit)[0]
 mean_velocity_r500 = np.sum(velocities[r500_mask] * masses[r500_mask, None], axis=0) / np.sum(masses[r500_mask])
 
-print(mean_velocity_r500)
+velocities_rest_frame = velocities.copy()
+for i in range(3):
+    velocities_rest_frame[:, i] -= mean_velocity_r500[i]
+
+compton_y = unyt.unyt_array(
+    masses[:, None] * velocities_rest_frame[:, 2], 1.e10 * unyt.Solar_Masses * 1.e3 * unyt.km / unyt.s
+) * ksz_const / unyt.unyt_quantity(1., unyt.Mpc)
+
+
+print(compton_y)
