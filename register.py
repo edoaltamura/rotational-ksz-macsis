@@ -174,5 +174,5 @@ if __name__ == "__main__":
     macsis = Macsis()
     print('Halo list:', macsis.halo_paths)
 
-    halo0 = macsis.get_zoom(0).get_redshift(22)
+    halo0 = macsis.get_zoom(0).get_redshift(-1)
     print(halo0)
