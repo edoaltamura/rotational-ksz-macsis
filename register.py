@@ -169,8 +169,8 @@ class Zoom(object):
         redshift_info['scale_factor'] = self.scale_factors[index]
         redshift_info['redshift'] = redshift_select
         redshift_info['snapshot_path'] = self.snapshot_paths[index]
-        redshift_info['catalogue_grouptab_path'] = self.catalogue_subfindtab_paths[index]
-        redshift_info['catalogue_subfindtab_path'] = self.catalogue_grouptab_paths[index]
+        redshift_info['catalogue_subfindtab_path'] = self.catalogue_subfindtab_paths[index]
+        redshift_info['catalogue_grouptab_path'] = self.catalogue_grouptab_paths[index]
         redshift_info['catalogue_particles_path'] = self.catalogue_particles_paths[index]
 
         check_index = np.where(self.scale_factors == redshift_info['scale_factor'])[0][0]
