@@ -138,6 +138,13 @@ y = np.asarray(y, dtype=np.float64)
 m = np.asarray(compton_y, dtype=np.float32)
 h = np.asarray(h, dtype=np.float32)
 smoothed_map = scatter(x=x, y=y, m=m, h=h, res=128).T
-smoothed_map = np.ma.masked_where(np.abs(smoothed_map) < 1.e-9, smoothed_map)
+smoothed_map = np.ma.masked_where(np.abs(smoothed_map) < 1.e-12, smoothed_map)
 
-print(smoothed_map)
+plt.imshow(
+    smoothed_map,
+    norm=LogNorm(),
+    cmap="cividis",
+    origin="lower",
+)
+
+plt.show()
