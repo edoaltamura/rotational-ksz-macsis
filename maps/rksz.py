@@ -39,9 +39,9 @@ masses = data.read_snapshot('PartType0/Mass')
 velocities = data.read_snapshot('PartType0/Velocity')
 temperatures = data.read_snapshot('PartType0/Temperature')
 
-centre_of_potential = data.read_catalogue_subfindtab('FOF/GroupCentreOfPotential')
-r500_crit = data.read_catalogue_subfindtab('FOF/Group_R_Crit500')
-m500_crit = data.read_catalogue_subfindtab('FOF/Group_M_Crit500')
+centre_of_potential = data.read_catalogue_subfindtab('FOF/GroupCentreOfPotential')[0]
+r500_crit = data.read_catalogue_subfindtab('FOF/Group_R_Crit500')[0]
+m500_crit = data.read_catalogue_subfindtab('FOF/Group_M_Crit500')[0]
 
 # Select ionised hot gas
 temperature_cut = np.where(temperatures > 1.e5)[0]
