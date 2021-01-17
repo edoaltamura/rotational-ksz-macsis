@@ -159,7 +159,7 @@ class Zoom(object):
         redshift_info['catalogue_subfindtab_path'] = self.catalogue_grouptab_paths[index]
         redshift_info['catalogue_particles_path'] = self.catalogue_particles_paths[index]
 
-        check_index = np.where(self.scale_factors == redshift_info['scale_factor'])[0]
+        check_index = np.where(self.scale_factors == redshift_info['scale_factor'])[0][0]
         assert f"{check_index:03d}" in os.path.basename(redshift_info['snapshot_path'])
         assert f"{check_index:03d}" in os.path.basename(redshift_info['catalogue_grouptab_path'])
         assert f"{check_index:03d}" in os.path.basename(redshift_info['catalogue_subfindtab_path'])
