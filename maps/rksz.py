@@ -119,7 +119,7 @@ for i in range(3):
 # Rotate coordinates and velocities
 print(coordinates)
 coordinates_edgeon = rotate_coordinates(coordinates, angular_momentum_r500, tilt='edgeon')
-velocities_rest_frame_edgeon = rotate_coordinates(velocities_rest_frame, angular_momentum_r500, tilt='edgeon')
+velocities_rest_frame_edgeon = rotate_velocities(velocities_rest_frame, angular_momentum_r500, tilt='edgeon')
 
 compton_y = unyt.unyt_array(
     masses * velocities_rest_frame_edgeon[:, 2], 1.e10 * unyt.Solar_Mass * 1.e3 * unyt.km / unyt.s
