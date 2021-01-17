@@ -117,13 +117,14 @@ for i in range(3):
     velocities_rest_frame[:, i] -= mean_velocity_r500[i]
 
 # Rotate coordinates and velocities
-coordinates_edgeon = rotate_coordinates(coordinates, angular_momentum_r500, tilt='edgeon')
-velocities_rest_frame_edgeon = rotate_velocities(velocities_rest_frame, angular_momentum_r500, tilt='edgeon')
+coordinates_edgeon = rotate_coordinates(coordinates, angular_momentum_r500, tilt='z')
+velocities_rest_frame_edgeon = rotate_velocities(velocities_rest_frame, angular_momentum_r500, tilt='z')
 
 compton_y = unyt.unyt_array(
     masses * velocities_rest_frame_edgeon[:, 2], 1.e10 * unyt.Solar_Mass * 1.e3 * unyt.km / unyt.s
 ) * ksz_const / unyt.unyt_quantity(1., unyt.Mpc) ** 2
 
+# Restrict map to 2*R500
 spatial_filter = np.where(
     np.abs(coordinates_edgeon[:, 0] < r500_crit) &
     np.abs(coordinates_edgeon[:, 1] < r500_crit) &
@@ -135,7 +136,7 @@ velocities_rest_frame_edgeon = velocities_rest_frame_edgeon[spatial_filter]
 smoothing_lengths = smoothing_lengths[spatial_filter]
 compton_y = compton_y[spatial_filter]
 
-# Make map
+# Make map using swiftsimio
 x = (coordinates_edgeon[:, 0] - coordinates_edgeon[:, 0].min()) / (coordinates_edgeon[:, 0].max() - coordinates_edgeon[:, 0].min())
 y = (coordinates_edgeon[:, 1] - coordinates_edgeon[:, 1].min()) / (coordinates_edgeon[:, 1].max() - coordinates_edgeon[:, 1].min())
 h = smoothing_lengths / (coordinates_edgeon[:, 1].max() - coordinates_edgeon[:, 1].min())
