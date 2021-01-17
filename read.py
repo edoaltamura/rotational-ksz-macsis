@@ -52,6 +52,12 @@ class MacsisDataset(object):
     def read_catalogue_particles(self, dataset_path: str):
         return self.read_dataset('catalogue_particles_file', dataset_path)
 
+    def __del__(self):
+        self.snapshot_file.close()
+        self.catalogue_grouptab_file.close()
+        self.catalogue_subfindtab_file.close()
+        self.catalogue_particles_file.close()
+
 
 if __name__ == "__main__":
     from register import Macsis
@@ -59,4 +65,4 @@ if __name__ == "__main__":
     for i in range(3):
         halo_handle = macsis.get_zoom(i).get_redshift(-1)
         data = MacsisDataset(halo_handle)
-        print(data.read_snapshot('PartType1/Temperature'))
+        print(data.read_snapshot('PartType0/Temperature'))
