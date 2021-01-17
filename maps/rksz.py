@@ -155,5 +155,5 @@ plt.imshow(
     cmap="bone",
     origin="lower",
 )
-
+plt.axis('off')
 plt.show()
