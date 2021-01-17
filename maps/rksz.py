@@ -1,4 +1,5 @@
 import os
+import sys
 import numpy as np
 import unyt
 from swiftsimio.visualisation.projection import scatter_parallel as scatter
