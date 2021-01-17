@@ -44,7 +44,6 @@ def rotate_coordinates(coord: np.ndarray, angular_momentum_hot_gas: np.ndarray, 
     elif tilt == 'edgeon':
         edge_on_rotation_matrix = rotation_matrix_from_vector(angular_momentum_hot_gas, axis='y')
         new_coord = edge_on_rotation_matrix.dot(coord.T).T
-        print(new_coord)
 
     return new_coord
 
@@ -137,8 +136,8 @@ x = np.asarray(x, dtype=np.float64)
 y = np.asarray(y, dtype=np.float64)
 m = np.asarray(compton_y, dtype=np.float32)
 h = np.asarray(h, dtype=np.float32)
-smoothed_map = scatter(x=x, y=y, m=m, h=h, res=128).T
-smoothed_map = np.ma.masked_where(np.abs(smoothed_map) < 1.e-12, smoothed_map)
+smoothed_map = scatter(x=x, y=y, m=m, h=h, res=256).T
+smoothed_map = np.ma.masked_where(np.abs(smoothed_map) < 1.e-20, smoothed_map)
 
 plt.imshow(
     smoothed_map,
