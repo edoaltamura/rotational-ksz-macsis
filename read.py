@@ -18,8 +18,16 @@ class MacsisDataset(object):
     catalogue_particles_file: h5py.File
 
     def __init__(self, redshift_obj: Redshift):
-        for attr_name, attr_value in inspect.getmembers(redshift_obj):
-            setattr(self, attr_name, attr_value)
+
+        self.run_name = redshift_obj.run_name
+        self.scale_factor = redshift_obj.scale_factor
+        self.a = redshift_obj.a
+        self.redshift = redshift_obj.redshift
+        self.z = redshift_obj.z
+        self.snapshot_path = redshift_obj.snapshot_path
+        self.catalogue_grouptab_path = redshift_obj.catalogue_grouptab_path
+        self.catalogue_subfindtab_path = redshift_obj.catalogue_subfindtab_path
+        self.catalogue_particles_path = redshift_obj.catalogue_particles_path
 
         self.snapshot_file = h5py.File(self.snapshot_path, 'r')
         self.catalogue_grouptab_file = h5py.File(self.catalogue_grouptab_path, 'r')
@@ -57,5 +65,4 @@ if __name__ == "__main__":
     for i in range(3):
         halo_handle = macsis.get_zoom(i).get_redshift(-1)
         data = MacsisDataset(halo_handle)
-
         print(data.read_snapshot('PartType1/Temperature'))
