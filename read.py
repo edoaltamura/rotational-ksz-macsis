@@ -35,9 +35,10 @@ class MacsisDataset(object):
         self.catalogue_particles_file = h5py.File(self.catalogue_particles_path, 'r')
 
     def read_dataset(self, file_type: str, dataset_path: str):
-        data = getattr(self, file_type)[dataset_path][:]
-        data *= self.a ** data.attrs['aexp-scale-exponent']
-        data *= self.snapshot_file['Header'].attrs['HubbleParam'] ** data.attrs['h-scale-exponent']
+        data_handle = getattr(self, file_type)[dataset_path]
+        data = data_handle[:]
+        data *= self.a ** data_handle.attrs['aexp-scale-exponent']
+        data *= self.snapshot_file['Header'].attrs['HubbleParam'] ** data_handle.attrs['h-scale-exponent']
         return data
 
     def read_snapshot(self, dataset_path: str):
