@@ -127,6 +127,13 @@ class Zoom(object):
         assert len(self.scale_factors) == len(self.catalogue_grouptab_paths)
         assert len(self.scale_factors) == len(self.catalogue_particles_paths)
 
+        # Sort redshift outputs by index
+        sort_arg = dict(key=lambda x: int(x.split('.')[0][-3:]))
+        self.snapshot_paths.sort(**sort_arg)
+        self.catalogue_subfindtab_paths.sort(**sort_arg)
+        self.catalogue_grouptab_paths.sort(**sort_arg)
+        self.catalogue_particles_paths.sort(**sort_arg)
+
     def read_output_list(self):
         output_list_file = os.path.join(self.run_directory, 'output_list')
         scale_factors = np.genfromtxt(output_list_file)
@@ -151,6 +158,8 @@ class Zoom(object):
         redshift_info['catalogue_grouptab_path'] = self.catalogue_subfindtab_paths[index]
         redshift_info['catalogue_subfindtab_path'] = self.catalogue_grouptab_paths[index]
         redshift_info['catalogue_particles_path'] = self.catalogue_particles_paths[index]
+
+
 
         assert f"{index:03d}" in os.path.basename(redshift_info['snapshot_path'])
         assert f"{index:03d}" in os.path.basename(redshift_info['catalogue_grouptab_path'])
