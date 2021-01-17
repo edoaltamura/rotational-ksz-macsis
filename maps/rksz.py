@@ -146,8 +146,8 @@ x = np.asarray(x, dtype=np.float64)
 y = np.asarray(y, dtype=np.float64)
 m = np.asarray(compton_y, dtype=np.float32)
 h = np.asarray(h, dtype=np.float32)
-smoothed_map = scatter(x=x, y=y, m=m, h=h, res=256).T
-smoothed_map = np.ma.masked_where(np.abs(smoothed_map) < 1.e-20, smoothed_map)
+smoothed_map = scatter(x=x, y=y, m=m, h=h, res=100).T
+smoothed_map = np.ma.masked_where(np.log10(np.abs(smoothed_map)) < -20, smoothed_map)
 
 plt.imshow(
     smoothed_map,
