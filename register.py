@@ -37,6 +37,7 @@ class Macsis:
 
 class Redshift(object):
     __slots__ = (
+        'run_name',
         'scale_factor',
         'a',
         'redshift',
@@ -47,6 +48,7 @@ class Redshift(object):
         'catalogue_particles_path',
     )
 
+    run_name: str
     scale_factor: float
     a: float
     redshift: float
@@ -65,6 +67,7 @@ class Redshift(object):
 
     def __str__(self):
         return (
+            f"Run name:                 {self.run_name}\n"
             f"Scale factor (a):         {self.scale_factor}\n"
             f"Redshift (z):             {self.redshift}\n"
             f"Snapshot file:            {self.snapshot_path}\n"
@@ -141,6 +144,17 @@ class Zoom(object):
         return scale_factors, redshifts
 
     def get_redshift(self, index: int = -1):
+        """
+        To get z = 0 data promptly, specify index = -1. This
+        selects the last output in the index list, which is the
+        last redshift produced at runtime.
+
+        :param index: int
+            The integer index describing the output sequence.
+        :return: Redshift instance
+            The Redshift object contains fast-access absolute
+            paths to the key files to read data from.
+        """
 
         try:
             redshift_select = self.redshifts[index]
@@ -152,6 +166,7 @@ class Zoom(object):
             raise err
 
         redshift_info = dict()
+        redshift_info['run_name'] = self.run_name
         redshift_info['scale_factor'] = self.scale_factors[index]
         redshift_info['redshift'] = redshift_select
         redshift_info['snapshot_path'] = self.snapshot_paths[index]
@@ -170,7 +185,6 @@ class Zoom(object):
 
 if __name__ == "__main__":
     macsis = Macsis()
-    print('Halo list:', macsis.halo_paths)
-
-    halo0 = macsis.get_zoom(0).get_redshift(-1)
-    print(halo0)
+    for i in range(10):
+        halo = macsis.get_zoom(i).get_redshift(-1)
+        print(halo)
