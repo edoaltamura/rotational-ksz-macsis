@@ -71,7 +71,7 @@ for i in range(3):
     velocities_rest_frame[:, i] -= mean_velocity_r500[i]
 
 compton_y = unyt.unyt_array(
-    masses[:, None] * velocities_rest_frame[:, 2], 1.e10 * unyt.Solar_Masses * 1.e3 * unyt.km / unyt.s
+    masses * velocities_rest_frame[:, 2], 1.e10 * unyt.Solar_Masses * 1.e3 * unyt.km / unyt.s
 ) * ksz_const / unyt.unyt_quantity(1., unyt.Mpc)
 
 
