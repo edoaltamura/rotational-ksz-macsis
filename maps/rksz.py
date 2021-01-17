@@ -40,11 +40,10 @@ def rotate_coordinates(coord: np.ndarray, angular_momentum_hot_gas: np.ndarray, 
         new_coord = np.vstack((z, y, x)).T
     elif tilt == 'faceon':
         face_on_rotation_matrix = rotation_matrix_from_vector(angular_momentum_hot_gas)
-        new_coord = np.einsum('ijk,ik->ij', face_on_rotation_matrix, coord)
+        new_coord = face_on_rotation_matrix.dot(coord.T).T
     elif tilt == 'edgeon':
         edge_on_rotation_matrix = rotation_matrix_from_vector(angular_momentum_hot_gas, axis='y')
         new_coord = edge_on_rotation_matrix.dot(coord.T).T
-        # new_coord = np.einsum('ijk,ik->ij', edge_on_rotation_matrix, coord)
         print(new_coord)
 
     return new_coord
@@ -62,10 +61,10 @@ def rotate_velocities(velocities: np.ndarray, angular_momentum_hot_gas: np.ndarr
         new_vel = np.vstack((-vz, -vy, vx)).T
     elif tilt == 'faceon':
         face_on_rotation_matrix = rotation_matrix_from_vector(angular_momentum_hot_gas)
-        new_vel = np.einsum('ijk,ik->ij', face_on_rotation_matrix, velocities)
+        new_vel = face_on_rotation_matrix.dot(velocities.T).T
     elif tilt == 'edgeon':
         edge_on_rotation_matrix = rotation_matrix_from_vector(angular_momentum_hot_gas, axis='y')
-        new_vel = np.einsum('ijk,ik->ij', edge_on_rotation_matrix, velocities)
+        new_vel = edge_on_rotation_matrix.dot(velocities.T).T
 
     return new_vel
 
@@ -81,6 +80,7 @@ densities = data.read_snapshot('PartType0/Density')
 masses = data.read_snapshot('PartType0/Mass')
 velocities = data.read_snapshot('PartType0/Velocity')
 temperatures = data.read_snapshot('PartType0/Temperature')
+smoothing_lengths = data.read_snapshot('PartType0/SmoothingLength')
 
 centre_of_potential = data.read_catalogue_subfindtab('FOF/GroupCentreOfPotential')[0]
 r500_crit = data.read_catalogue_subfindtab('FOF/Group_R_Crit500')[0]
@@ -94,6 +94,7 @@ densities = densities[temperature_cut]
 masses = masses[temperature_cut]
 velocities = velocities[temperature_cut]
 temperatures = temperatures[temperature_cut]
+smoothing_lengths = smoothing_lengths[temperature_cut]
 
 # Rescale coordinates to CoP
 for i in range(3):
@@ -126,4 +127,17 @@ compton_y = unyt.unyt_array(
 ) * ksz_const / unyt.unyt_quantity(1., unyt.Mpc) ** 2
 
 
-print(angular_momentum_r500)
+# Make map
+x = (coordinates_edgeon[:, 0] - coordinates_edgeon[:, 0].min()) / (coordinates_edgeon[:, 0].max() - coordinates_edgeon[:, 0].min())
+y = (coordinates_edgeon[:, 1] - coordinates_edgeon[:, 1].min()) / (coordinates_edgeon[:, 1].max() - coordinates_edgeon[:, 1].min())
+h = smoothing_lengths / (coordinates_edgeon[:, 1].max() - coordinates_edgeon[:, 1].min())
+
+# Gather and handle coordinates to be processed
+x = np.asarray(x, dtype=np.float64)
+y = np.asarray(y, dtype=np.float64)
+m = np.asarray(compton_y, dtype=np.float32)
+h = np.asarray(h, dtype=np.float32)
+smoothed_map = scatter(x=x, y=y, m=m, h=h, res=128).T
+smoothed_map = np.ma.masked_where(np.abs(smoothed_map) < 1.e-9, smoothed_map)
+
+print(smoothed_map)
