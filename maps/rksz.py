@@ -117,7 +117,6 @@ for i in range(3):
     velocities_rest_frame[:, i] -= mean_velocity_r500[i]
 
 # Rotate coordinates and velocities
-print(coordinates)
 coordinates_edgeon = rotate_coordinates(coordinates, angular_momentum_r500, tilt='edgeon')
 velocities_rest_frame_edgeon = rotate_velocities(velocities_rest_frame, angular_momentum_r500, tilt='edgeon')
 
@@ -125,6 +124,16 @@ compton_y = unyt.unyt_array(
     masses * velocities_rest_frame_edgeon[:, 2], 1.e10 * unyt.Solar_Mass * 1.e3 * unyt.km / unyt.s
 ) * ksz_const / unyt.unyt_quantity(1., unyt.Mpc) ** 2
 
+spatial_filter = np.where(
+    np.abs(coordinates_edgeon[:, 0] < r500_crit) &
+    np.abs(coordinates_edgeon[:, 1] < r500_crit) &
+    np.abs(coordinates_edgeon[:, 2] < r500_crit)
+)[0]
+
+coordinates_edgeon = coordinates_edgeon[spatial_filter]
+velocities_rest_frame_edgeon = velocities_rest_frame_edgeon[spatial_filter]
+smoothing_lengths = smoothing_lengths[spatial_filter]
+compton_y = compton_y[spatial_filter]
 
 # Make map
 x = (coordinates_edgeon[:, 0] - coordinates_edgeon[:, 0].min()) / (coordinates_edgeon[:, 0].max() - coordinates_edgeon[:, 0].min())
@@ -142,7 +151,7 @@ smoothed_map = np.ma.masked_where(np.abs(smoothed_map) < 1.e-20, smoothed_map)
 plt.imshow(
     smoothed_map,
     norm=LogNorm(),
-    cmap="cividis",
+    cmap="bone",
     origin="lower",
 )
 
