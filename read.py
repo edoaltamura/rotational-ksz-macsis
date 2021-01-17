@@ -34,12 +34,6 @@ class MacsisDataset(object):
         self.catalogue_subfindtab_file = h5py.File(self.catalogue_subfindtab_path, 'r')
         self.catalogue_particles_file = h5py.File(self.catalogue_particles_path, 'r')
 
-    def __del__(self):
-        self.snapshot_file.close()
-        self.catalogue_grouptab_file.close()
-        self.catalogue_subfindtab_file.close()
-        self.catalogue_particles_file.close()
-
     def read_dataset(self, file_type: str, dataset_path: str):
         data = getattr(self, file_type)[dataset_path][:]
         data *= self.a ** data.attrs['aexp-scale-exponent']
