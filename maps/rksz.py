@@ -64,6 +64,6 @@ radial_dist = np.sqrt(
 )
 
 r500_mask = np.where(radial_dist < r500_crit)[0]
-mean_velocity_r500 = np.sum(velocities[r500_mask] * masses[r500_mask, None]) / np.sum(masses[r500_mask])
+mean_velocity_r500 = np.sum(velocities[r500_mask] * masses[r500_mask, None], axis=0) / np.sum(masses[r500_mask])
 
 print(mean_velocity_r500)
