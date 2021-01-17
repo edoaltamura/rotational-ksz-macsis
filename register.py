@@ -140,7 +140,7 @@ class Zoom(object):
         redshifts = 1 / scale_factors - 1
         return scale_factors, redshifts
 
-    def get_redshift(self, index: int = 0):
+    def get_redshift(self, index: int = -1):
 
         try:
             redshift_select = self.redshifts[index]
@@ -159,12 +159,11 @@ class Zoom(object):
         redshift_info['catalogue_subfindtab_path'] = self.catalogue_grouptab_paths[index]
         redshift_info['catalogue_particles_path'] = self.catalogue_particles_paths[index]
 
-        print(f"{index:03d}")
-
-        assert f"{index:03d}" in os.path.basename(redshift_info['snapshot_path'])
-        assert f"{index:03d}" in os.path.basename(redshift_info['catalogue_grouptab_path'])
-        assert f"{index:03d}" in os.path.basename(redshift_info['catalogue_subfindtab_path'])
-        assert f"{index:03d}" in os.path.basename(redshift_info['catalogue_particles_path'])
+        check_index = np.where(self.scale_factors == redshift_info['scale_factor'])[0]
+        assert f"{check_index:03d}" in os.path.basename(redshift_info['snapshot_path'])
+        assert f"{check_index:03d}" in os.path.basename(redshift_info['catalogue_grouptab_path'])
+        assert f"{check_index:03d}" in os.path.basename(redshift_info['catalogue_subfindtab_path'])
+        assert f"{check_index:03d}" in os.path.basename(redshift_info['catalogue_particles_path'])
 
         return Redshift(redshift_info)
 
