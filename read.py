@@ -48,7 +48,7 @@ class MacsisDataset(object):
         return self.read_dataset('catalogue_grouptab_file', dataset_path)
 
     def read_catalogue_subfindtab(self, dataset_path: str):
-        return self.read_dataset('scatalogue_subfindtab_file', dataset_path)
+        return self.read_dataset('catalogue_subfindtab_file', dataset_path)
 
     def read_catalogue_particles(self, dataset_path: str):
         return self.read_dataset('catalogue_particles_file', dataset_path)
