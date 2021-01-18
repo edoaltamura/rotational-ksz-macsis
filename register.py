@@ -98,7 +98,7 @@ class Zoom(object):
                 files = os.listdir(path_output)
                 if len(files) == 1 and isinstance(files, list):
                     files = os.path.join(path_output, files[0])
-                else:
+                elif len(files) > 1:
                     files = tuple([os.path.join(path_output, file) for file in files])
 
                 self.snapshot_paths.append(files)
