@@ -43,14 +43,14 @@ def rotate_coordinates(coord: np.ndarray, angular_momentum_hot_gas: np.ndarray, 
         new_coord = np.matmul(face_on_rotation_matrix, coord.T).T
         # new_coord = face_on_rotation_matrix.dot().T
     elif tilt == 'edgeon':
-        edge_on_rotation_matrix = rotation_matrix_from_vector(angular_momentum_hot_gas, axis='y')
+        edge_on_rotation_matrix = rotation_matrix_from_vector(angular_momentum_hot_gas, axis='x')
         new_coord = np.matmul(edge_on_rotation_matrix, coord.T).T
     return new_coord
 
 
-def rotate_velocities(velocities: np.ndarray, angular_momentum_hot_gas: np.ndarray, tilt: str = 'z'):
+def rotate_velocities(vel: np.ndarray, angular_momentum_hot_gas: np.ndarray, tilt: str = 'z'):
 
-    vx, vy, vz = velocities.T
+    vx, vy, vz = vel.T
 
     if tilt == 'y':
         new_vel = np.vstack((vx, vz, vy)).T
@@ -60,10 +60,10 @@ def rotate_velocities(velocities: np.ndarray, angular_momentum_hot_gas: np.ndarr
         new_vel = np.vstack((-vz, -vy, vx)).T
     elif tilt == 'faceon':
         face_on_rotation_matrix = rotation_matrix_from_vector(angular_momentum_hot_gas)
-        new_vel = face_on_rotation_matrix.dot(velocities.T).T
+        new_vel = np.matmul(face_on_rotation_matrix, vel.T).T
     elif tilt == 'edgeon':
-        edge_on_rotation_matrix = rotation_matrix_from_vector(angular_momentum_hot_gas, axis='y')
-        new_vel = edge_on_rotation_matrix.dot(velocities.T).T
+        edge_on_rotation_matrix = rotation_matrix_from_vector(angular_momentum_hot_gas, axis='x')
+        new_vel = np.matmul(edge_on_rotation_matrix, vel.T).T
 
     return new_vel
 
