@@ -127,26 +127,26 @@ compton_y = unyt.unyt_array(
 ) * ksz_const / unyt.unyt_quantity(1., unyt.Mpc) ** 2
 
 # Restrict map to 2*R500
-spatial_filter = np.where(
-    np.abs(coordinates_edgeon[:, 0] < r500_crit) &
-    np.abs(coordinates_edgeon[:, 1] < r500_crit) &
-    np.abs(coordinates_edgeon[:, 2] < r500_crit)
-)[0]
-
-coordinates_edgeon = coordinates_edgeon[spatial_filter]
-velocities_rest_frame_edgeon = velocities_rest_frame_edgeon[spatial_filter]
-smoothing_lengths = smoothing_lengths[spatial_filter]
-compton_y = compton_y[spatial_filter]
+# spatial_filter = np.where(
+#     np.abs(coordinates_edgeon[:, 0] < r500_crit) &
+#     np.abs(coordinates_edgeon[:, 1] < r500_crit) &
+#     np.abs(coordinates_edgeon[:, 2] < r500_crit)
+# )[0]
+#
+# coordinates_edgeon = coordinates_edgeon[spatial_filter]
+# velocities_rest_frame_edgeon = velocities_rest_frame_edgeon[spatial_filter]
+# smoothing_lengths = smoothing_lengths[spatial_filter]
+# compton_y = compton_y[spatial_filter]
 
 # Make map using swiftsimio
-x = (coordinates_edgeon[:, 0] - coordinates_edgeon[:, 0].min()) / (2 * r500_crit)
-y = (coordinates_edgeon[:, 1] - coordinates_edgeon[:, 1].min()) / (2 * r500_crit)
-h = smoothing_lengths / (2 * r500_crit)
+x = (coordinates_edgeon[:, 0] - coordinates_edgeon[:, 0].min()) / (coordinates_edgeon[:, 0].max() - coordinates_edgeon[:, 0].min())
+y = (coordinates_edgeon[:, 1] - coordinates_edgeon[:, 1].min()) / (coordinates_edgeon[:, 1].max() - coordinates_edgeon[:, 1].min())
+h = smoothing_lengths / (coordinates_edgeon[:, 1].max() - coordinates_edgeon[:, 1].min())
 
 # Gather and handle coordinates to be processed
 x = np.asarray(x, dtype=np.float64)
 y = np.asarray(y, dtype=np.float64)
-m = np.asarray(densities[spatial_filter], dtype=np.float32)
+m = np.asarray(densities, dtype=np.float32)
 h = np.asarray(h, dtype=np.float32)
 smoothed_map = scatter(x=x, y=y, m=m, h=h, res=1000).T
 # smoothed_map = np.ma.masked_where(np.log10(np.abs(smoothed_map)) < -20, smoothed_map)
