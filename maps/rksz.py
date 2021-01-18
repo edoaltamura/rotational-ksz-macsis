@@ -151,10 +151,10 @@ m = np.asarray(compton_y, dtype=np.float32)
 h = np.asarray(h, dtype=np.float32)
 smoothed_map = scatter(x=x, y=y, m=m, h=h, res=1000).T
 # smoothed_map = np.ma.masked_where(np.log10(np.abs(smoothed_map)) < -20, smoothed_map)
-
+vlim = 10 ** -4
 plt.imshow(
-    np.abs(smoothed_map),
-    norm=LogNorm(),
+    smoothed_map,
+    norm=SymLogNorm(linthresh=1e-5, linscale=0.5, vmin=-vlim, vmax=vlim, base=10),
     cmap="bone",
     origin="lower",
 )
