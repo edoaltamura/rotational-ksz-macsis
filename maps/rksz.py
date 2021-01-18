@@ -142,7 +142,7 @@ compton_y = compton_y[spatial_filter]
 # Make map using swiftsimio
 x = (coordinates_edgeon[:, 0] - coordinates_edgeon[:, 0].min()) / (coordinates_edgeon[:, 0].max() - coordinates_edgeon[:, 0].min())
 y = (coordinates_edgeon[:, 1] - coordinates_edgeon[:, 1].min()) / (coordinates_edgeon[:, 1].max() - coordinates_edgeon[:, 1].min())
-h = smoothing_lengths / (coordinates_edgeon[:, 1].max() - coordinates_edgeon[:, 1].min())
+h = smoothing_lengths# / (coordinates_edgeon[:, 1].max() - coordinates_edgeon[:, 1].min()) ** 2
 
 # Gather and handle coordinates to be processed
 x = np.asarray(x, dtype=np.float64)
