@@ -40,11 +40,11 @@ def rotate_coordinates(coord: np.ndarray, angular_momentum_hot_gas: np.ndarray, 
         new_coord = np.vstack((z, y, x)).T
     elif tilt == 'faceon':
         face_on_rotation_matrix = rotation_matrix_from_vector(angular_momentum_hot_gas)
-        new_coord = face_on_rotation_matrix.dot(coord.T).T
+        new_coord = np.matmul(face_on_rotation_matrix, coord.T)
+        # new_coord = face_on_rotation_matrix.dot().T
     elif tilt == 'edgeon':
         edge_on_rotation_matrix = rotation_matrix_from_vector(angular_momentum_hot_gas, axis='y')
-        new_coord = edge_on_rotation_matrix.dot(coord.T).T
-
+        new_coord = np.matmul(edge_on_rotation_matrix, coord.T)
     return new_coord
 
 
@@ -117,8 +117,8 @@ for i in range(3):
     velocities_rest_frame[:, i] -= mean_velocity_r500[i]
 
 # Rotate coordinates and velocities
-coordinates_edgeon = rotate_coordinates(coordinates, angular_momentum_r500, tilt='z')
-velocities_rest_frame_edgeon = rotate_velocities(velocities_rest_frame, angular_momentum_r500, tilt='z')
+coordinates_edgeon = rotate_coordinates(coordinates, angular_momentum_r500, tilt='edgeon')
+velocities_rest_frame_edgeon = rotate_velocities(velocities_rest_frame, angular_momentum_r500, tilt='edgeon')
 
 compton_y = unyt.unyt_array(
     masses * velocities_rest_frame_edgeon[:, 2], 1.e10 * unyt.Solar_Mass * 1.e3 * unyt.km / unyt.s
