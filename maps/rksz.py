@@ -127,16 +127,16 @@ compton_y = unyt.unyt_array(
 ) * ksz_const / unyt.unyt_quantity(1., unyt.Mpc) ** 2
 
 # Restrict map to 2*R500
-# spatial_filter = np.where(
-#     np.abs(coordinates_edgeon[:, 0] < r500_crit) &
-#     np.abs(coordinates_edgeon[:, 1] < r500_crit) &
-#     np.abs(coordinates_edgeon[:, 2] < r500_crit)
-# )[0]
-#
-# coordinates_edgeon = coordinates_edgeon[spatial_filter]
-# velocities_rest_frame_edgeon = velocities_rest_frame_edgeon[spatial_filter]
-# smoothing_lengths = smoothing_lengths[spatial_filter]
-# compton_y = compton_y[spatial_filter]
+spatial_filter = np.where(
+    (np.abs(coordinates_edgeon[:, 0]) < r500_crit) &
+    (np.abs(coordinates_edgeon[:, 1]) < r500_crit) &
+    (np.abs(coordinates_edgeon[:, 2]) < r500_crit)
+)[0]
+
+coordinates_edgeon = coordinates_edgeon[spatial_filter]
+velocities_rest_frame_edgeon = velocities_rest_frame_edgeon[spatial_filter]
+smoothing_lengths = smoothing_lengths[spatial_filter]
+compton_y = compton_y[spatial_filter]
 
 # Make map using swiftsimio
 x = (coordinates_edgeon[:, 0] - coordinates_edgeon[:, 0].min()) / (coordinates_edgeon[:, 0].max() - coordinates_edgeon[:, 0].min())
