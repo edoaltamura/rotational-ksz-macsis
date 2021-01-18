@@ -129,15 +129,15 @@ compton_y = unyt.unyt_array(
 
 # Restrict map to 2*R500
 spatial_filter = np.where(
-    (np.abs(coordinates_edgeon[:, 0]) < r500_crit) &
-    (np.abs(coordinates_edgeon[:, 1]) < r500_crit) &
-    (np.abs(coordinates_edgeon[:, 2]) < r500_crit)
+    (np.abs(coordinates_edgeon[:, 0]) < r500_crit / 2) &
+    (np.abs(coordinates_edgeon[:, 1]) < r500_crit / 2) &
+    (np.abs(coordinates_edgeon[:, 2]) < r500_crit / 2)
 )[0]
 
 coordinates_edgeon = coordinates_edgeon[spatial_filter]
 velocities_rest_frame_edgeon = velocities_rest_frame_edgeon[spatial_filter]
 smoothing_lengths = smoothing_lengths[spatial_filter]
-compton_y = compton_y[spatial_filter]
+ = compton_y[spatial_filter]
 
 # Make map using swiftsimio
 x = (coordinates_edgeon[:, 0] - coordinates_edgeon[:, 0].min()) / (coordinates_edgeon[:, 0].max() - coordinates_edgeon[:, 0].min())
@@ -150,7 +150,7 @@ y = np.asarray(y, dtype=np.float64)
 m = np.asarray(compton_y, dtype=np.float32)
 h = np.asarray(h, dtype=np.float32)
 smoothed_map = scatter(x=x, y=y, m=m, h=h, res=1000).T
-print(smoothing_lengths.max(), smoothed_map.min())
+print(compton_y.max(), compton_y.min(), smoothing_lengths.max(), smoothed_map.min())
 # smoothed_map = np.ma.masked_where(np.log10(np.abs(smoothed_map)) < -20, smoothed_map)
 vlim = np.abs(smoothed_map).max()
 plt.imshow(
