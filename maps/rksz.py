@@ -167,6 +167,6 @@ plt.imshow(
         coordinates_edgeon[:, 1].max(),
     )
 )
-plt.plot([0, angular_momentum_r500_rotated[0] * r500_crit], [0, angular_momentum_r500_rotated[1] * r500_crit])
+plt.plot([0, angular_momentum_r500_rotated[0] * r500_crit], [0, angular_momentum_r500_rotated[1] * r500_crit], m='o')
 plt.axis('off')
 plt.show()
