@@ -28,7 +28,7 @@ tsz_const = unyt.thompson_cross_section * unyt.boltzmann_constant / 1.16 / \
             unyt.speed_of_light ** 2 / unyt.proton_mass / unyt.electron_mass
 
 
-def rotate_coordinates(coord: np.ndarray, angular_momentum_hot_gas: np.ndarray, tilt: str = 'z'):
+def rotate_coordinates(coord: np.ndarray, angular_momentum_hot_gas: np.ndarray, tilt: str = 'y'):
 
     x, y, z = coord.T
 
@@ -42,7 +42,7 @@ def rotate_coordinates(coord: np.ndarray, angular_momentum_hot_gas: np.ndarray, 
         face_on_rotation_matrix = rotation_matrix_from_vector(angular_momentum_hot_gas)
         new_coord = np.matmul(face_on_rotation_matrix, coord.T).T
     elif tilt == 'edgeon':
-        edge_on_rotation_matrix = rotation_matrix_from_vector(angular_momentum_hot_gas, axis='x')
+        edge_on_rotation_matrix = rotation_matrix_from_vector(angular_momentum_hot_gas, axis='y')
         new_coord = np.matmul(edge_on_rotation_matrix, coord.T).T
     return new_coord
 
