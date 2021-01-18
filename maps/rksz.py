@@ -120,8 +120,8 @@ velocities_rest_frame[:, 1] -= mean_velocity_r500[1]
 velocities_rest_frame[:, 2] -= mean_velocity_r500[2]
 
 # Rotate coordinates and velocities
-coordinates_edgeon = rotate_coordinates(coordinates, angular_momentum_r500, tilt='edgeon')
-velocities_rest_frame_edgeon = rotate_velocities(velocities_rest_frame, angular_momentum_r500, tilt='edgeon')
+coordinates_edgeon = rotate_coordinates(coordinates, angular_momentum_r500, tilt='faceon')
+velocities_rest_frame_edgeon = rotate_velocities(velocities_rest_frame, angular_momentum_r500, tilt='faceon')
 
 compton_y = unyt.unyt_array(
     masses * velocities_rest_frame_edgeon[:, 2], 1.e10 * unyt.Solar_Mass * 1.e3 * unyt.km / unyt.s
