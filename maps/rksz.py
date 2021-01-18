@@ -152,7 +152,7 @@ x = np.asarray(x, dtype=np.float64)
 y = np.asarray(y, dtype=np.float64)
 m = np.asarray(compton_y, dtype=np.float32)
 h = np.asarray(h, dtype=np.float32)
-res = 2048
+res = 1024
 smoothed_map = scatter(x=x, y=y, m=m, h=h, res=res).T
 print(compton_y.max(), compton_y.min(), smoothing_lengths.max(), smoothed_map.min())
 # smoothed_map = np.ma.masked_where(np.log10(np.abs(smoothed_map)) < -20, smoothed_map)
@@ -174,15 +174,11 @@ plt.axis('off')
 # plt.show()
 plt.close()
 
-compton_y_DC = smoothed_map - np.mean(smoothed_map)
 spectrum = np.fft.fftshift(np.fft.fft2(smoothed_map))
-spectrum_wo_DC = np.fft.fftshift(np.fft.fft2(compton_y_DC))
-
-freqx = np.fft.fftshift(np.fft.fftfreq(res, 1))  # q(n, d=1.0)
+freqx = np.fft.fftshift(np.fft.fftfreq(res, 1))
 freqy = np.fft.fftshift(np.fft.fftfreq(res, 1))
 fX, fY = np.meshgrid(freqx, freqy)
-
 plt.pcolormesh(fX, fY, np.abs(spectrum), norm=LogNorm())
-plt.show()
-plt.pcolormesh(fX, fY, np.abs(spectrum_wo_DC), norm=LogNorm())
+plt.xlim([-0.01, 0.01])
+plt.ylim([-0.01, 0.01])
 plt.show()
