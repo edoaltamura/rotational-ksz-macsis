@@ -155,7 +155,7 @@ print(smoothing_lengths.max(), smoothed_map.min())
 vlim = 10 ** -4
 plt.imshow(
     smoothed_map,
-    norm=SymLogNorm(linthresh=0.001, linscale=0.5, vmin=-vlim, vmax=vlim),
+    norm=SymLogNorm(linthresh=0.01, linscale=1, vmin=-vlim, vmax=vlim),
     cmap="PRGn",
     origin="lower",
 )
