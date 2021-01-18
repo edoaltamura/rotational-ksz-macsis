@@ -158,14 +158,26 @@ def rksz_map(halo):
 
 
 macsis = Macsis()
+halo_handles = [macsis.get_zoom(zoom_id).get_redshift(-1) for zoom_id in range(30)]
+from multiprocessing import Pool, cpu_count
 
-for zoom_id in range(30):
-    print("Zoom ID:", zoom_id)
-    halo_handle = macsis.get_zoom(zoom_id).get_redshift(-1)
-    if zoom_id == 0:
-        smoothed_map = rksz_map(halo_handle)
-    else:
-        smoothed_map += rksz_map(halo_handle)
+if len(halo_handles) == 1:
+    print("Analysing one object only. Not using multiprocessing features.")
+    results = rksz_map(halo_handles[0])
+else:
+    num_threads = len(halo_handles) if len(halo_handles) < cpu_count() else cpu_count()
+    # The results of the multiprocessing Pool are returned in the same order as inputs
+    print(f"Analysis of {len(halo_handles):d} zooms mapped onto {num_threads:d} CPUs.")
+    with Pool(num_threads) as pool:
+        results = pool.map(rksz_map, iter(halo_handles))
+
+if len(halo_handles) > 1:
+    for i in range(len(halo_handles)):
+        print(f"Merging map {i}")
+        if i == 0:
+            smoothed_map = results[0]
+        else:
+            smoothed_map += results[i]
 
 # smoothed_map = np.ma.masked_where(np.log10(np.abs(smoothed_map)) < -20, smoothed_map)
 vlim = np.abs(smoothed_map).max()
