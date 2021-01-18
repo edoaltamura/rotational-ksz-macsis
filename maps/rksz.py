@@ -122,7 +122,7 @@ coordinates_edgeon = rotate_coordinates(coordinates, angular_momentum_r500, tilt
 velocities_rest_frame_edgeon = rotate_velocities(velocities_rest_frame, angular_momentum_r500, tilt='faceon')
 
 # Rotate angular momentum vector for cross check
-angular_momentum_r500_rotated = rotate_coordinates(np.linalg.norm(angular_momentum_r500), angular_momentum_r500, tilt='faceon')
+angular_momentum_r500_rotated = rotate_coordinates(angular_momentum_r500/np.linalg.norm(angular_momentum_r500), angular_momentum_r500, tilt='faceon')
 
 compton_y = unyt.unyt_array(
     masses * velocities_rest_frame_edgeon[:, 2], 1.e10 * unyt.Solar_Mass * 1.e3 * unyt.km / unyt.s
