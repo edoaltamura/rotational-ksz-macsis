@@ -164,44 +164,45 @@ def dump_to_hdf5_parallel():
 
     with h5py.File('rksz_gas.hdf5', 'w', driver='mpio', comm=MPI.COMM_WORLD) as f:
 
-        for zoom_id in range(30):
+
+        for zoom_id in range(60):
 
             if zoom_id % num_processes == rank:
-
-                print("rank = {}, i = {}".format(rank, zoom_id))
                 data_handle = macsis.get_zoom(zoom_id).get_redshift(-1)
+                print(f"Rank {rank} processing halo {zoom_id} (MACSIS name {data_handle.run_name})")
 
                 # Create group containing all halo data
                 halo_group = f.create_group(f"{data_handle.run_name}")
-                rksz = rksz_map(data_handle, resolution=1024, alignment='edgeon')
-                halo_group.create_dataset(f"gas_rksz_edgeon", rksz.shape, dtype=rksz.dtype, data=rksz)
+                # rksz = rksz_map(data_handle, resolution=1024, alignment='edgeon')
+                # halo_group.create_dataset(f"gas_rksz_edgeon", rksz.shape, dtype=rksz.dtype, data=rksz)
+
 
 dump_to_hdf5_parallel()
-with h5py.File('rksz_gas.hdf5', 'r') as f:
-    for i, halo in enumerate(f.keys()):
-        if rank == 0:
-            print(f"Merging map {i}")
-        if i == 0:
-            smoothed_map = f[f"{halo}/gas_rksz_edgeon"][:]
-        else:
-            smoothed_map += f[f"{halo}/gas_rksz_edgeon"][:]
 
+if rank == 0:
+    with h5py.File('rksz_gas.hdf5', 'r') as f:
+        for i, halo in enumerate(f.keys()):
+            print(f"Merging map from {halo}")
+            if i == 0:
+                smoothed_map = f[f"{halo}/gas_rksz_edgeon"][:]
+            else:
+                smoothed_map += f[f"{halo}/gas_rksz_edgeon"][:]
 
-# smoothed_map = np.ma.masked_where(np.log10(np.abs(smoothed_map)) < -20, smoothed_map)
-vlim = np.abs(smoothed_map).max()
-plt.imshow(
-    smoothed_map,
-    norm=SymLogNorm(linthresh=0.01, linscale=1, vmin=-vlim, vmax=vlim),
-    cmap="PRGn",
-    origin="lower",
-    # extent=(
-    #     coordinates_edgeon[:, 0].min(),
-    #     coordinates_edgeon[:, 0].max(),
-    #     coordinates_edgeon[:, 1].min(),
-    #     coordinates_edgeon[:, 1].max(),
-    # )
-)
-# plt.plot([0, angular_momentum_r500_rotated[0]], [0, angular_momentum_r500_rotated[1]], marker='o')
-plt.axis('off')
-plt.show()
-plt.close()
+    # smoothed_map = np.ma.masked_where(np.log10(np.abs(smoothed_map)) < -20, smoothed_map)
+    vlim = np.abs(smoothed_map).max()
+    plt.imshow(
+        smoothed_map,
+        norm=SymLogNorm(linthresh=0.01, linscale=1, vmin=-vlim, vmax=vlim),
+        cmap="PRGn",
+        origin="lower",
+        # extent=(
+        #     coordinates_edgeon[:, 0].min(),
+        #     coordinates_edgeon[:, 0].max(),
+        #     coordinates_edgeon[:, 1].min(),
+        #     coordinates_edgeon[:, 1].max(),
+        # )
+    )
+    # plt.plot([0, angular_momentum_r500_rotated[0]], [0, angular_momentum_r500_rotated[1]], marker='o')
+    plt.axis('off')
+    plt.show()
+    plt.close()
