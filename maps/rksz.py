@@ -153,7 +153,7 @@ smoothed_map = scatter(x=x, y=y, m=m, h=h, res=1000).T
 # smoothed_map = np.ma.masked_where(np.log10(np.abs(smoothed_map)) < -20, smoothed_map)
 
 plt.imshow(
-    smoothed_map,
+    np.abs(smoothed_map),
     norm=LogNorm(),
     cmap="bone",
     origin="lower",
