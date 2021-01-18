@@ -41,7 +41,6 @@ def rotate_coordinates(coord: np.ndarray, angular_momentum_hot_gas: np.ndarray, 
     elif tilt == 'faceon':
         face_on_rotation_matrix = rotation_matrix_from_vector(angular_momentum_hot_gas)
         new_coord = np.matmul(face_on_rotation_matrix, coord.T).T
-        # new_coord = face_on_rotation_matrix.dot().T
     elif tilt == 'edgeon':
         edge_on_rotation_matrix = rotation_matrix_from_vector(angular_momentum_hot_gas, axis='x')
         new_coord = np.matmul(edge_on_rotation_matrix, coord.T).T
@@ -52,9 +51,9 @@ def rotate_velocities(vel: np.ndarray, angular_momentum_hot_gas: np.ndarray, til
 
     vx, vy, vz = vel.T
 
-    if tilt == 'y':
-        new_vel = np.vstack((vx, vz, vy)).T
-    elif tilt == 'z':
+    if tilt == 'z':
+        new_vel = np.vstack((vx, vz, -vy)).T
+    elif tilt == 'y':
         new_vel = np.vstack((vx, -vy, vz)).T
     elif tilt == 'x':
         new_vel = np.vstack((-vz, -vy, vx)).T
@@ -64,7 +63,6 @@ def rotate_velocities(vel: np.ndarray, angular_momentum_hot_gas: np.ndarray, til
     elif tilt == 'edgeon':
         edge_on_rotation_matrix = rotation_matrix_from_vector(angular_momentum_hot_gas, axis='x')
         new_vel = np.matmul(edge_on_rotation_matrix, vel.T).T
-
     return new_vel
 
 
@@ -123,6 +121,9 @@ velocities_rest_frame[:, 2] -= mean_velocity_r500[2]
 coordinates_edgeon = rotate_coordinates(coordinates, angular_momentum_r500, tilt='faceon')
 velocities_rest_frame_edgeon = rotate_velocities(velocities_rest_frame, angular_momentum_r500, tilt='faceon')
 
+# Rotate angular momentum vector for cross check
+angular_momentum_r500_rotated = rotate_coordinates(np.linalg.norm(angular_momentum_r500), angular_momentum_r500, tilt='faceon')
+
 compton_y = unyt.unyt_array(
     masses * velocities_rest_frame_edgeon[:, 2], 1.e10 * unyt.Solar_Mass * 1.e3 * unyt.km / unyt.s
 ) * ksz_const / unyt.unyt_quantity(1., unyt.Mpc) ** 2
@@ -159,6 +160,13 @@ plt.imshow(
     norm=SymLogNorm(linthresh=0.01, linscale=1, vmin=-vlim, vmax=vlim),
     cmap="PRGn",
     origin="lower",
+    extent=(
+        coordinates_edgeon[:, 0].min(),
+        coordinates_edgeon[:, 0].max(),
+        coordinates_edgeon[:, 1].min(),
+        coordinates_edgeon[:, 1].max(),
+    )
 )
+plt.plot([0, angular_momentum_r500_rotated[0] * r500_crit], [0, angular_momentum_r500_rotated[1] * r500_crit])
 plt.axis('off')
 plt.show()
