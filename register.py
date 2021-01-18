@@ -125,16 +125,16 @@ class Zoom(object):
                 self.catalogue_particles_paths.append(files)
 
         assert len(self.scale_factors) == len(self.snapshot_paths), (
-            f"{len(self.scale_factors)} != {len(self.snapshot_paths)}"
+            f"[Halo {self.run_name}] {len(self.scale_factors)} != {len(self.snapshot_paths)}"
         )
         assert len(self.scale_factors) == len(self.catalogue_subfindtab_paths), (
-            f"{len(self.scale_factors)} != {len(self.catalogue_subfindtab_paths)}"
+            f"[Halo {self.run_name}] {len(self.scale_factors)} != {len(self.catalogue_subfindtab_paths)}"
         )
         assert len(self.scale_factors) == len(self.catalogue_grouptab_paths), (
-            f"{len(self.scale_factors)} != {len(self.catalogue_grouptab_paths)}"
+            f"[Halo {self.run_name}] {len(self.scale_factors)} != {len(self.catalogue_grouptab_paths)}"
         )
         assert len(self.scale_factors) == len(self.catalogue_particles_paths), (
-            f"{len(self.scale_factors)} != {len(self.catalogue_particles_paths)}"
+            f"[Halo {self.run_name}] {len(self.scale_factors)} != {len(self.catalogue_particles_paths)}"
         )
 
         # Sort redshift outputs by index
