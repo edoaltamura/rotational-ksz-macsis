@@ -154,8 +154,8 @@ smoothed_map = scatter(x=x, y=y, m=m, h=h, res=1000).T
 vlim = 10 ** -4
 plt.imshow(
     smoothed_map,
-    norm=SymLogNorm(linthresh=1e-5, linscale=0.5, vmin=-vlim, vmax=vlim, base=10),
-    cmap="bone",
+    norm=SymLogNorm(linthresh=1e-5, linscale=0.5, vmin=-vlim, vmax=vlim),
+    cmap="PRGn",
     origin="lower",
 )
 plt.axis('off')
