@@ -171,4 +171,5 @@ plt.imshow(
 )
 plt.plot([0, angular_momentum_r500_rotated[0]], [0, angular_momentum_r500_rotated[1]], marker='o')
 plt.axis('off')
+plt.colorbar()
 plt.show()
