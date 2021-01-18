@@ -137,7 +137,7 @@ spatial_filter = np.where(
 coordinates_edgeon = coordinates_edgeon[spatial_filter]
 velocities_rest_frame_edgeon = velocities_rest_frame_edgeon[spatial_filter]
 smoothing_lengths = smoothing_lengths[spatial_filter]
- = compton_y[spatial_filter]
+compton_y = compton_y[spatial_filter]
 
 # Make map using swiftsimio
 x = (coordinates_edgeon[:, 0] - coordinates_edgeon[:, 0].min()) / (coordinates_edgeon[:, 0].max() - coordinates_edgeon[:, 0].min())
