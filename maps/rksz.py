@@ -142,9 +142,9 @@ compton_y = compton_y[spatial_filter]
 
 # Make map using swiftsimio
 x = (coordinates_edgeon[:, 0] - coordinates_edgeon[:, 0].min()) / (
-            coordinates_edgeon[:, 0].max() - coordinates_edgeon[:, 0].min())
+        coordinates_edgeon[:, 0].max() - coordinates_edgeon[:, 0].min())
 y = (coordinates_edgeon[:, 1] - coordinates_edgeon[:, 1].min()) / (
-            coordinates_edgeon[:, 1].max() - coordinates_edgeon[:, 1].min())
+        coordinates_edgeon[:, 1].max() - coordinates_edgeon[:, 1].min())
 h = smoothing_lengths / (coordinates_edgeon.max() - coordinates_edgeon.min()) ** 2
 
 # Gather and handle coordinates to be processed
@@ -175,17 +175,12 @@ plt.show()
 compton_y_DC = smoothed_map - np.mean(smoothed_map)
 spectrum = np.fft.fftshift(np.fft.fft2(smoothed_map))
 spectrum_wo_DC = np.fft.fftshift(np.fft.fft2(compton_y_DC))
-plt.imshow(
-    spectrum,
-    norm=LogNorm(),
-    cmap="PRGn",
-    origin="lower",
-)
+
+freqx = np.fft.fftshift(np.fft.fftfreq(128, 1))  # q(n, d=1.0)
+freqy = np.fft.fftshift(np.fft.fftfreq(128, 1))
+fX, fY = np.meshgrid(freqx, freqy)
+
+plt.pcolormesh(fX, fY, np.abs(spectrum))
 plt.show()
-plt.imshow(
-    spectrum_wo_DC,
-    norm=LogNorm(),
-    cmap="PRGn",
-    origin="lower",
-)
+plt.pcolormesh(fX, fY, np.abs(spectrum_wo_DC))
 plt.show()
