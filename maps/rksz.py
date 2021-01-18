@@ -152,7 +152,8 @@ x = np.asarray(x, dtype=np.float64)
 y = np.asarray(y, dtype=np.float64)
 m = np.asarray(compton_y, dtype=np.float32)
 h = np.asarray(h, dtype=np.float32)
-smoothed_map = scatter(x=x, y=y, m=m, h=h, res=128).T
+res = 2048
+smoothed_map = scatter(x=x, y=y, m=m, h=h, res=res).T
 print(compton_y.max(), compton_y.min(), smoothing_lengths.max(), smoothed_map.min())
 # smoothed_map = np.ma.masked_where(np.log10(np.abs(smoothed_map)) < -20, smoothed_map)
 vlim = np.abs(smoothed_map).max()
@@ -170,17 +171,17 @@ plt.imshow(
 )
 plt.plot([0, angular_momentum_r500_rotated[0]], [0, angular_momentum_r500_rotated[1]], marker='o')
 plt.axis('off')
-plt.show()
+# plt.show()
 
 compton_y_DC = smoothed_map - np.mean(smoothed_map)
 spectrum = np.fft.fftshift(np.fft.fft2(smoothed_map))
 spectrum_wo_DC = np.fft.fftshift(np.fft.fft2(compton_y_DC))
 
-freqx = np.fft.fftshift(np.fft.fftfreq(128, 1))  # q(n, d=1.0)
-freqy = np.fft.fftshift(np.fft.fftfreq(128, 1))
+freqx = np.fft.fftshift(np.fft.fftfreq(res, 1))  # q(n, d=1.0)
+freqy = np.fft.fftshift(np.fft.fftfreq(res, 1))
 fX, fY = np.meshgrid(freqx, freqy)
 
-plt.pcolormesh(fX, fY, np.abs(spectrum))
+plt.pcolormesh(fX, fY, np.abs(spectrum), norm=LogNorm())
 plt.show()
-plt.pcolormesh(fX, fY, np.abs(spectrum_wo_DC))
+plt.pcolormesh(fX, fY, np.abs(spectrum_wo_DC), norm=LogNorm())
 plt.show()
