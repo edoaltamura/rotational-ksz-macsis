@@ -172,6 +172,7 @@ plt.imshow(
 plt.plot([0, angular_momentum_r500_rotated[0]], [0, angular_momentum_r500_rotated[1]], marker='o')
 plt.axis('off')
 # plt.show()
+plt.close()
 
 compton_y_DC = smoothed_map - np.mean(smoothed_map)
 spectrum = np.fft.fftshift(np.fft.fft2(smoothed_map))
