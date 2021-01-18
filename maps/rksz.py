@@ -143,14 +143,14 @@ compton_y = compton_y[spatial_filter]
 # Make map using swiftsimio
 x = (coordinates_edgeon[:, 0] - coordinates_edgeon[:, 0].min()) / (coordinates_edgeon[:, 0].max() - coordinates_edgeon[:, 0].min())
 y = (coordinates_edgeon[:, 1] - coordinates_edgeon[:, 1].min()) / (coordinates_edgeon[:, 1].max() - coordinates_edgeon[:, 1].min())
-h = smoothing_lengths / (coordinates_edgeon[:, 1].max() - coordinates_edgeon[:, 1].min()) ** 2
+h = smoothing_lengths / (coordinates_edgeon.max() - coordinates_edgeon.min()) ** 2
 
 # Gather and handle coordinates to be processed
 x = np.asarray(x, dtype=np.float64)
 y = np.asarray(y, dtype=np.float64)
 m = np.asarray(compton_y, dtype=np.float32)
 h = np.asarray(h, dtype=np.float32)
-smoothed_map = scatter(x=x, y=y, m=m, h=h, res=1000).T
+smoothed_map = scatter(x=x, y=y, m=m, h=h, res=128).T
 print(compton_y.max(), compton_y.min(), smoothing_lengths.max(), smoothed_map.min())
 # smoothed_map = np.ma.masked_where(np.log10(np.abs(smoothed_map)) < -20, smoothed_map)
 vlim = np.abs(smoothed_map).max()
