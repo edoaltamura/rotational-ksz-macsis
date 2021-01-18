@@ -164,21 +164,21 @@ def dump_to_hdf5_parallel():
 
     with h5py.File('rksz_gas.hdf5', 'w', driver='mpio', comm=MPI.COMM_WORLD) as f:
 
-        # Editing the structure of the file MUST be done collectively
+        # Retrieve all zoom handles in parallel (slow otherwise)
         zoom_handles = []
+        for zoom_id in range(macsis.num_zooms):
+            if zoom_id % num_processes == rank:
+                print(f"Collecting metadata for process ({zoom_id}/{macsis.num_zooms - 1})...")
+                data_handle = macsis.get_zoom(zoom_id).get_redshift(-1)
+        zoom_handles = MPI.COMM_WORLD.alltoall(data_handle, zoom_handles)
+
+        # Editing the structure of the file MUST be done collectively
         if rank == 0:
             print("Preparing structure of the file (collective operations)...")
-
-        for zoom_id in range(macsis.num_zooms):
-            if rank == 0:
-                print(f"Collecting metadata for process ({zoom_id}/{macsis.num_zooms})...")
-            data_handle = macsis.get_zoom(zoom_id).get_redshift(-1)
-
-            # Create group containing all halo data
+        for zoom_id, data_handle in enumerate(zoom_handles):
             halo_group = f.create_group(f"{data_handle.run_name}")
             rksz = rksz_map(data_handle, resolution=1024, alignment='edgeon')
             halo_group.create_dataset(f"gas_rksz_edgeon", rksz.shape, dtype=rksz.dtype)
-            zoom_handles.append(data_handle)
 
         # Data assignment can be done through independent operations
         for zoom_id, data_handle in enumerate(zoom_handles):
