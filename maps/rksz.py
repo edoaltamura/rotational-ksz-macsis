@@ -176,7 +176,7 @@ def dump_to_hdf5_parallel():
                 rksz = rksz_map(data_handle, resolution=1024, alignment='edgeon')
                 halo_group.create_dataset(f"gas_rksz_edgeon", rksz.shape, dtype=rksz.dtype, data=rksz)
 
-
+dump_to_hdf5_parallel()
 with h5py.File('rksz_gas.hdf5', 'r') as f:
     for i, halo in enumerate(f.keys()):
         if rank == 0:
