@@ -152,7 +152,7 @@ h = np.asarray(h, dtype=np.float32)
 smoothed_map = scatter(x=x, y=y, m=m, h=h, res=1000).T
 print(smoothing_lengths.max(), smoothed_map.min())
 # smoothed_map = np.ma.masked_where(np.log10(np.abs(smoothed_map)) < -20, smoothed_map)
-vlim = 10 ** -4
+vlim = 10 ** -6
 plt.imshow(
     smoothed_map,
     norm=SymLogNorm(linthresh=0.01, linscale=1, vmin=-vlim, vmax=vlim),
