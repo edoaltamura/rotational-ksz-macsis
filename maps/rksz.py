@@ -96,8 +96,9 @@ temperatures = temperatures[temperature_cut]
 smoothing_lengths = smoothing_lengths[temperature_cut]
 
 # Rescale coordinates to CoP
-for i in range(3):
-    coordinates[:, i] -= centre_of_potential[i]
+coordinates[:, 0] -= centre_of_potential[0]
+coordinates[:, 1] -= centre_of_potential[1]
+coordinates[:, 2] -= centre_of_potential[2]
 
 # Compute mean velocity inside R500
 radial_dist = np.sqrt(
@@ -113,8 +114,9 @@ angular_momentum_r500 = np.sum(
 ) / np.sum(masses[r500_mask])
 
 velocities_rest_frame = velocities.copy()
-for i in range(3):
-    velocities_rest_frame[:, i] -= mean_velocity_r500[i]
+velocities_rest_frame[:, 0] -= mean_velocity_r500[0]
+velocities_rest_frame[:, 1] -= mean_velocity_r500[1]
+velocities_rest_frame[:, 2] -= mean_velocity_r500[2]
 
 # Rotate coordinates and velocities
 coordinates_edgeon = coordinates.copy()# rotate_coordinates(coordinates, angular_momentum_r500, tilt='edgeon')
@@ -137,16 +139,16 @@ smoothing_lengths = smoothing_lengths[spatial_filter]
 compton_y = compton_y[spatial_filter]
 
 # Make map using swiftsimio
-x = (coordinates_edgeon[:, 0] - coordinates_edgeon[:, 0].min()) / (coordinates_edgeon[:, 0].max() - coordinates_edgeon[:, 0].min())
-y = (coordinates_edgeon[:, 1] - coordinates_edgeon[:, 1].min()) / (coordinates_edgeon[:, 1].max() - coordinates_edgeon[:, 1].min())
-h = smoothing_lengths / (coordinates_edgeon[:, 1].max() - coordinates_edgeon[:, 1].min())
+x = (coordinates_edgeon[:, 0] - coordinates_edgeon[:, 0].min()) / (2 * r500_crit)
+y = (coordinates_edgeon[:, 1] - coordinates_edgeon[:, 1].min()) / (2 * r500_crit)
+h = smoothing_lengths / (2 * r500_crit)
 
 # Gather and handle coordinates to be processed
 x = np.asarray(x, dtype=np.float64)
 y = np.asarray(y, dtype=np.float64)
 m = np.asarray(densities[spatial_filter], dtype=np.float32)
 h = np.asarray(h, dtype=np.float32)
-smoothed_map = scatter(x=x, y=y, m=m, h=h, res=100).T
+smoothed_map = scatter(x=x, y=y, m=m, h=h, res=1000).T
 # smoothed_map = np.ma.masked_where(np.log10(np.abs(smoothed_map)) < -20, smoothed_map)
 
 plt.imshow(
