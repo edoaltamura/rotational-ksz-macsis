@@ -171,6 +171,8 @@ def dump_to_hdf5_parallel():
                 print(f"Collecting metadata for process ({zoom_id}/{macsis.num_zooms - 1})...")
                 data_handles[zoom_id] = macsis.get_zoom(zoom_id).get_redshift(-1)
         zoom_handles = MPI.COMM_WORLD.gather(data_handles, root=0)
+        if rank == 0:
+            print(zoom_handles)
         MPI.COMM_WORLD.Bcast(zoom_handles, root=0)
 
         # Editing the structure of the file MUST be done collectively
