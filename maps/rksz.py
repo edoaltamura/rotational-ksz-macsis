@@ -1,11 +1,12 @@
 import os
 import sys
-import numpy as np
 import unyt
+import h5py
+import numpy as np
+from mpi4py import MPI
 from swiftsimio.visualisation.projection import scatter_parallel as scatter
 from swiftsimio.visualisation.rotation import rotation_matrix_from_vector
 from swiftsimio.visualisation.smoothing_length_generation import generate_smoothing_lengths
-
 from matplotlib import pyplot as plt
 from matplotlib.colors import LogNorm, SymLogNorm
 
@@ -18,6 +19,9 @@ sys.path.append(
         )
     )
 )
+
+num_processes = MPI.COMM_WORLD.size
+rank = MPI.COMM_WORLD.rank
 
 from read import MacsisDataset
 from register import Macsis
@@ -63,7 +67,7 @@ def rotate_velocities(vel: np.ndarray, angular_momentum_hot_gas: np.ndarray, til
     return new_vel
 
 
-def rksz_map(halo):
+def rksz_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
     data = MacsisDataset(halo)
 
     # Read data
@@ -113,12 +117,12 @@ def rksz_map(halo):
     velocities_rest_frame[:, 2] -= mean_velocity_r500[2]
 
     # Rotate coordinates and velocities
-    coordinates_edgeon = rotate_coordinates(coordinates, angular_momentum_r500, tilt='edgeon')
-    velocities_rest_frame_edgeon = rotate_velocities(velocities_rest_frame, angular_momentum_r500, tilt='edgeon')
+    coordinates_edgeon = rotate_coordinates(coordinates, angular_momentum_r500, tilt=alignment)
+    velocities_rest_frame_edgeon = rotate_velocities(velocities_rest_frame, angular_momentum_r500, tilt=alignment)
 
     # Rotate angular momentum vector for cross check
     angular_momentum_r500_rotated = rotate_coordinates(
-        angular_momentum_r500 / np.linalg.norm(angular_momentum_r500), angular_momentum_r500, tilt='edgeon'
+        angular_momentum_r500 / np.linalg.norm(angular_momentum_r500), angular_momentum_r500, tilt=alignment
     ) * r500_crit / 2
 
     compton_y = unyt.unyt_array(
@@ -150,34 +154,38 @@ def rksz_map(halo):
     y = np.asarray(y, dtype=np.float64)
     m = np.asarray(compton_y, dtype=np.float32)
     h = np.asarray(h, dtype=np.float32)
-    res = 1024
-    smoothed_map = scatter(x=x, y=y, m=m, h=h, res=res).T
-    print(compton_y.max(), compton_y.min(), smoothing_lengths.max(), smoothed_map.min())
+    smoothed_map = scatter(x=x, y=y, m=m, h=h, res=resolution).T
 
     return smoothed_map
 
 
-macsis = Macsis()
-halo_handles = [macsis.get_zoom(zoom_id).get_redshift(-1) for zoom_id in range(30)]
-from multiprocessing import Pool, cpu_count
+def dump_to_hdf5_parallel():
+    macsis = Macsis()
 
-if len(halo_handles) == 1:
-    print("Analysing one object only. Not using multiprocessing features.")
-    results = rksz_map(halo_handles[0])
-else:
-    num_threads = len(halo_handles) if len(halo_handles) < cpu_count() else cpu_count()
-    # The results of the multiprocessing Pool are returned in the same order as inputs
-    print(f"Analysis of {len(halo_handles):d} zooms mapped onto {num_threads:d} CPUs.")
-    with Pool(num_threads) as pool:
-        results = pool.map(rksz_map, iter(halo_handles))
+    with h5py.File('rksz_gas.hdf5', 'w', driver='mpio', comm=MPI.COMM_WORLD) as f:
 
-if len(halo_handles) > 1:
-    for i in range(len(halo_handles)):
-        print(f"Merging map {i}")
+        for zoom_id in range(30):
+
+            if zoom_id % num_processes == rank:
+
+                print("rank = {}, i = {}".format(rank, zoom_id))
+
+                # Create group containing all halo data
+                halo_group = f.create_group(f"{data_handle.run_name}")
+                data_handle = macsis.get_zoom(zoom_id).get_redshift(-1)
+                rksz = rksz_map(data_handle, resolution=1024, alignment='edgeon')
+                halo_group.create_dataset(f"gas_rksz_edgeon", rksz.shape, dtype=rksz.dtype, data=rksz)
+
+
+with h5py.File('rksz_gas.hdf5', 'r') as f:
+    for i, halo in enumerate(f.keys()):
+        if rank == 0:
+            print(f"Merging map {i}")
         if i == 0:
-            smoothed_map = results[0]
+            smoothed_map = f[f"{halo}/gas_rksz_edgeon"][:]
         else:
-            smoothed_map += results[i]
+            smoothed_map += f[f"{halo}/gas_rksz_edgeon"][:]
+
 
 # smoothed_map = np.ma.masked_where(np.log10(np.abs(smoothed_map)) < -20, smoothed_map)
 vlim = np.abs(smoothed_map).max()
@@ -197,12 +205,3 @@ plt.imshow(
 plt.axis('off')
 plt.show()
 plt.close()
-
-# spectrum = np.fft.fftshift(np.fft.fft2(smoothed_map))
-# freqx = np.fft.fftshift(np.fft.fftfreq(res, 1))
-# freqy = np.fft.fftshift(np.fft.fftfreq(res, 1))
-# fX, fY = np.meshgrid(freqx, freqy)
-# plt.pcolormesh(fX, fY, np.abs(spectrum), norm=LogNorm())
-# plt.xlim([-0.01, 0.01])
-# plt.ylim([-0.01, 0.01])
-# plt.show()
