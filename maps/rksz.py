@@ -169,10 +169,10 @@ def dump_to_hdf5_parallel():
             if zoom_id % num_processes == rank:
 
                 print("rank = {}, i = {}".format(rank, zoom_id))
+                data_handle = macsis.get_zoom(zoom_id).get_redshift(-1)
 
                 # Create group containing all halo data
                 halo_group = f.create_group(f"{data_handle.run_name}")
-                data_handle = macsis.get_zoom(zoom_id).get_redshift(-1)
                 rksz = rksz_map(data_handle, resolution=1024, alignment='edgeon')
                 halo_group.create_dataset(f"gas_rksz_edgeon", rksz.shape, dtype=rksz.dtype, data=rksz)
 
