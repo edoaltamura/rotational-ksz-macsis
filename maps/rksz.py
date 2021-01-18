@@ -120,8 +120,8 @@ velocities_rest_frame[:, 1] -= mean_velocity_r500[1]
 velocities_rest_frame[:, 2] -= mean_velocity_r500[2]
 
 # Rotate coordinates and velocities
-coordinates_edgeon = coordinates.copy()# rotate_coordinates(coordinates, angular_momentum_r500, tilt='edgeon')
-velocities_rest_frame_edgeon = velocities_rest_frame.copy()# rotate_velocities(velocities_rest_frame, angular_momentum_r500, tilt='edgeon')
+coordinates_edgeon = rotate_coordinates(coordinates, angular_momentum_r500, tilt='edgeon')
+velocities_rest_frame_edgeon = rotate_velocities(velocities_rest_frame, angular_momentum_r500, tilt='edgeon')
 
 compton_y = unyt.unyt_array(
     masses * velocities_rest_frame_edgeon[:, 2], 1.e10 * unyt.Solar_Mass * 1.e3 * unyt.km / unyt.s
@@ -142,12 +142,12 @@ compton_y = compton_y[spatial_filter]
 # Make map using swiftsimio
 x = (coordinates_edgeon[:, 0] - coordinates_edgeon[:, 0].min()) / (coordinates_edgeon[:, 0].max() - coordinates_edgeon[:, 0].min())
 y = (coordinates_edgeon[:, 1] - coordinates_edgeon[:, 1].min()) / (coordinates_edgeon[:, 1].max() - coordinates_edgeon[:, 1].min())
-h = smoothing_lengths# / (coordinates_edgeon[:, 1].max() - coordinates_edgeon[:, 1].min()) ** 2
+h = smoothing_lengths / (coordinates_edgeon[:, 1].max() - coordinates_edgeon[:, 1].min()) ** 2
 
 # Gather and handle coordinates to be processed
 x = np.asarray(x, dtype=np.float64)
 y = np.asarray(y, dtype=np.float64)
-m = np.asarray(densities[spatial_filter], dtype=np.float32)
+m = np.asarray(compton_y, dtype=np.float32)
 h = np.asarray(h, dtype=np.float32)
 smoothed_map = scatter(x=x, y=y, m=m, h=h, res=1000).T
 # smoothed_map = np.ma.masked_where(np.log10(np.abs(smoothed_map)) < -20, smoothed_map)
