@@ -126,6 +126,7 @@ velocities_rest_frame_edgeon = rotate_velocities(velocities_rest_frame, angular_
 compton_y = unyt.unyt_array(
     masses * velocities_rest_frame_edgeon[:, 2], 1.e10 * unyt.Solar_Mass * 1.e3 * unyt.km / unyt.s
 ) * ksz_const / unyt.unyt_quantity(1., unyt.Mpc) ** 2
+compton_y = compton_y.value
 
 # Restrict map to 2*R500
 spatial_filter = np.where(
