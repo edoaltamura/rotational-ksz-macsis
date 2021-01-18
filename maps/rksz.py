@@ -22,14 +22,12 @@ sys.path.append(
 from read import MacsisDataset
 from register import Macsis
 
-
 ksz_const = - unyt.thompson_cross_section / 1.16 / unyt.speed_of_light / unyt.proton_mass
 tsz_const = unyt.thompson_cross_section * unyt.boltzmann_constant / 1.16 / \
             unyt.speed_of_light ** 2 / unyt.proton_mass / unyt.electron_mass
 
 
 def rotate_coordinates(coord: np.ndarray, angular_momentum_hot_gas: np.ndarray, tilt: str = 'y'):
-
     x, y, z = coord.T
 
     if tilt == 'y':
@@ -48,7 +46,6 @@ def rotate_coordinates(coord: np.ndarray, angular_momentum_hot_gas: np.ndarray, 
 
 
 def rotate_velocities(vel: np.ndarray, angular_momentum_hot_gas: np.ndarray, tilt: str = 'z'):
-
     vx, vy, vz = vel.T
 
     if tilt == 'z':
@@ -123,7 +120,7 @@ velocities_rest_frame_edgeon = rotate_velocities(velocities_rest_frame, angular_
 
 # Rotate angular momentum vector for cross check
 angular_momentum_r500_rotated = rotate_coordinates(
-    angular_momentum_r500/np.linalg.norm(angular_momentum_r500), angular_momentum_r500, tilt='edgeon'
+    angular_momentum_r500 / np.linalg.norm(angular_momentum_r500), angular_momentum_r500, tilt='edgeon'
 ) * r500_crit / 2
 
 compton_y = unyt.unyt_array(
@@ -144,8 +141,10 @@ smoothing_lengths = smoothing_lengths[spatial_filter]
 compton_y = compton_y[spatial_filter]
 
 # Make map using swiftsimio
-x = (coordinates_edgeon[:, 0] - coordinates_edgeon[:, 0].min()) / (coordinates_edgeon[:, 0].max() - coordinates_edgeon[:, 0].min())
-y = (coordinates_edgeon[:, 1] - coordinates_edgeon[:, 1].min()) / (coordinates_edgeon[:, 1].max() - coordinates_edgeon[:, 1].min())
+x = (coordinates_edgeon[:, 0] - coordinates_edgeon[:, 0].min()) / (
+            coordinates_edgeon[:, 0].max() - coordinates_edgeon[:, 0].min())
+y = (coordinates_edgeon[:, 1] - coordinates_edgeon[:, 1].min()) / (
+            coordinates_edgeon[:, 1].max() - coordinates_edgeon[:, 1].min())
 h = smoothing_lengths / (coordinates_edgeon.max() - coordinates_edgeon.min()) ** 2
 
 # Gather and handle coordinates to be processed
@@ -171,5 +170,22 @@ plt.imshow(
 )
 plt.plot([0, angular_momentum_r500_rotated[0]], [0, angular_momentum_r500_rotated[1]], marker='o')
 plt.axis('off')
-plt.colorbar()
+plt.show()
+
+compton_y_DC = compton_y - np.mean(compton_y)
+spectrum = np.fft.fftshift(np.fft.fft2(compton_y))
+spectrum_wo_DC = np.fft.fftshift(np.fft.fft2(compton_y_DC))
+plt.imshow(
+    spectrum,
+    norm=LogNorm(),
+    cmap="PRGn",
+    origin="lower",
+)
+plt.show()
+plt.imshow(
+    spectrum_wo_DC,
+    norm=LogNorm(),
+    cmap="PRGn",
+    origin="lower",
+)
 plt.show()
