@@ -96,7 +96,7 @@ class Zoom(object):
             if dir_output.startswith('snapshot'):
 
                 files = os.listdir(path_output)
-                if len(files) == 1 and isinstance(files, list):
+                if len(files) == 1 and ~files[0].endswith('_023'):
                     files = os.path.join(path_output, files[0])
                 elif len(files) > 1:
                     files = tuple([os.path.join(path_output, file) for file in files])
