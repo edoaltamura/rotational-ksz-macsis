@@ -214,7 +214,7 @@ def dm_rotation_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
         angular_momentum_r500 / np.linalg.norm(angular_momentum_r500), angular_momentum_r500, tilt=alignment
     ) * r500_crit / 2
 
-    compton_y = velocities_rest_frame_edgeon[:, 2]
+    compton_y = - velocities_rest_frame_edgeon[:, 2]
 
     # Restrict map to 2*R500
     spatial_filter = np.where(
@@ -320,11 +320,11 @@ def dump_dm_to_hdf5_parallel():
                 rksz = dm_rotation_map(data_handle, resolution=1024, alignment='faceon')
                 f[f"{data_handle.run_name}/map_faceon"][:] = rksz
 
-# dump_gas_to_hdf5_parallel()
-dump_dm_to_hdf5_parallel()
+dump_gas_to_hdf5_parallel()
+# dump_dm_to_hdf5_parallel()
 
 if rank == 0:
-    with h5py.File('rksz_dm.hdf5', 'r') as f:
+    with h5py.File('rksz_gas.hdf5', 'r') as f:
         for i, halo in enumerate(f.keys()):
             print(f"Merging map from {halo}")
             dataset_handle = f[f"{halo}/map_edgeon"]
