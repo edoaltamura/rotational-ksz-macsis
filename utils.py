@@ -46,7 +46,7 @@ def dump_memory_usage() -> None:
     ))
 
 
-def commune(data):
+def commune(data, obj: bool = False):
     tmp = np.zeros(nproc, dtype=np.int)
     tmp[rank] = len(data)
     cnts = np.zeros(nproc, dtype=np.int)
@@ -57,7 +57,7 @@ def commune(data):
     for j in range(nproc):
         dspl[j] = i
         i += cnts[j]
-    rslt = np.zeros(i, dtype=data.dtype)
+    rslt = np.empty(i, dtype=data.dtype)
     comm.Allgatherv([data, cnts[rank]], [rslt, cnts, dspl, MPI._typedict[data.dtype.char]])
     del data, cnts, dspl
     return rslt
