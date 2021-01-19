@@ -176,9 +176,9 @@ def dump_to_hdf5_parallel():
 
         # print(data_handle)
         zoom_handles = comm.allgather(data_handles)
-        if rank == 1:
-            zoom_handles = np.concatenate(zoom_handles).ravel()
-            print('Rank', rank, zoom_handles)
+        zoom_handles = np.concatenate(zoom_handles).ravel()
+        if rank == 0:
+            print([data_handle.run_name for data_handle in data_handles])
 
         # Editing the structure of the file MUST be done collectively
         if rank == 0:
