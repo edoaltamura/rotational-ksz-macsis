@@ -166,12 +166,12 @@ def dump_to_hdf5_parallel():
     with h5py.File('rksz_gas.hdf5', 'w', driver='mpio', comm=MPI.COMM_WORLD) as f:
 
         # Retrieve all zoom handles in parallel (slow otherwise)
-        data_handles = np.empty(macsis.num_zooms, dtype=object)
+        data_handles = np.empty(0, dtype=object)
         for zoom_id in range(macsis.num_zooms):
             if zoom_id % num_processes == rank:
                 print(f"Collecting metadata for process ({zoom_id}/{macsis.num_zooms - 1})...")
-                data_handles[zoom_id] = macsis.get_zoom(zoom_id).get_redshift(-1)
-        zoom_handles = MPI.COMM_WORLD.alltoall(data_handles)
+                data_handles = np.append(data_handles, macsis.get_zoom(zoom_id).get_redshift(-1))
+        zoom_handles = commune(data_handles, obj=True)
         if rank == 0:
             print(zoom_handles)
 
