@@ -148,7 +148,92 @@ def rksz_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
             coordinates_edgeon[:, 0].max() - coordinates_edgeon[:, 0].min())
     y = (coordinates_edgeon[:, 1] - coordinates_edgeon[:, 1].min()) / (
             coordinates_edgeon[:, 1].max() - coordinates_edgeon[:, 1].min())
-    h = smoothing_lengths / (coordinates_edgeon.max() - coordinates_edgeon.min()) ** 2
+    h = smoothing_lengths / (coordinates_edgeon[:, 0].max() - coordinates_edgeon[:, 0].min())
+
+    # Gather and handle coordinates to be processed
+    x = np.asarray(x, dtype=np.float64)
+    y = np.asarray(y, dtype=np.float64)
+    m = np.asarray(compton_y, dtype=np.float32)
+    h = np.asarray(h, dtype=np.float32)
+    smoothed_map = scatter(x=x, y=y, m=m, h=h, res=resolution).T
+
+    return smoothed_map
+
+
+def dm_rotation_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
+    data = MacsisDataset(halo)
+
+    # Read data
+    coordinates = data.read_snapshot('PartType1/Coordinates')
+    velocities = data.read_snapshot('PartType1/Velocity')
+
+    # Remember that the largest FOF has index 1
+    centre_of_potential = data.read_catalogue_subfindtab('FOF/GroupCentreOfPotential')[1]
+    r500_crit = data.read_catalogue_subfindtab('FOF/Group_R_Crit500')[1]
+    m500_crit = data.read_catalogue_subfindtab('FOF/Group_M_Crit500')[1]
+
+    # Generate smoothing lengths for dark matter
+    smoothing_lengths = generate_smoothing_lengths(
+        coordinates,
+        data['Header'].attrs['BoxSize'],
+        kernel_gamma=1.8,
+        neighbours=57,
+        speedup_fac=2,
+        dimension=3,
+    )
+
+    # Rescale coordinates to CoP
+    coordinates[:, 0] -= centre_of_potential[0]
+    coordinates[:, 1] -= centre_of_potential[1]
+    coordinates[:, 2] -= centre_of_potential[2]
+
+    # Compute mean velocity inside R500
+    radial_dist = np.sqrt(
+        coordinates[:, 0] ** 2 +
+        coordinates[:, 1] ** 2 +
+        coordinates[:, 2] ** 2
+    )
+    r500_mask = np.where(radial_dist < r500_crit)[0]
+
+    mean_velocity_r500 = np.sum(velocities[r500_mask], axis=0) / len(velocities[r500_mask])
+    angular_momentum_r500 = np.sum(
+        np.cross(coordinates[r500_mask], velocities[r500_mask]), axis=0
+    ) / len(velocities[r500_mask])
+
+    velocities_rest_frame = velocities.copy()
+    velocities_rest_frame[:, 0] -= mean_velocity_r500[0]
+    velocities_rest_frame[:, 1] -= mean_velocity_r500[1]
+    velocities_rest_frame[:, 2] -= mean_velocity_r500[2]
+
+    # Rotate coordinates and velocities
+    coordinates_edgeon = rotate_coordinates(coordinates, angular_momentum_r500, tilt=alignment)
+    velocities_rest_frame_edgeon = rotate_velocities(velocities_rest_frame, angular_momentum_r500, tilt=alignment)
+
+    # Rotate angular momentum vector for cross check
+    angular_momentum_r500_rotated = rotate_coordinates(
+        angular_momentum_r500 / np.linalg.norm(angular_momentum_r500), angular_momentum_r500, tilt=alignment
+    ) * r500_crit / 2
+
+    compton_y = velocities_rest_frame_edgeon[:, 2]
+
+    # Restrict map to 2*R500
+    spatial_filter = np.where(
+        (np.abs(coordinates_edgeon[:, 0]) < r500_crit / 2) &
+        (np.abs(coordinates_edgeon[:, 1]) < r500_crit / 2) &
+        (np.abs(coordinates_edgeon[:, 2]) < r500_crit / 2)
+    )[0]
+
+    coordinates_edgeon = coordinates_edgeon[spatial_filter]
+    velocities_rest_frame_edgeon = velocities_rest_frame_edgeon[spatial_filter]
+    smoothing_lengths = smoothing_lengths[spatial_filter]
+    compton_y = compton_y[spatial_filter]
+
+    # Make map using swiftsimio
+    x = (coordinates_edgeon[:, 0] - coordinates_edgeon[:, 0].min()) / (
+            coordinates_edgeon[:, 0].max() - coordinates_edgeon[:, 0].min())
+    y = (coordinates_edgeon[:, 1] - coordinates_edgeon[:, 1].min()) / (
+            coordinates_edgeon[:, 1].max() - coordinates_edgeon[:, 1].min())
+    h = smoothing_lengths / (coordinates_edgeon[:, 0].max() - coordinates_edgeon[:, 0].min())
 
     # Gather and handle coordinates to be processed
     x = np.asarray(x, dtype=np.float64)
@@ -185,13 +270,23 @@ def dump_to_hdf5_parallel():
                 print(f"Structuring ({zoom_id}/{macsis.num_zooms - 1}): {data_handle.run_name}")
             halo_group = f.create_group(f"{data_handle.run_name}")
             halo_group.create_dataset(f"gas_rksz_edgeon", (1024, 1024), dtype=np.float)
+            halo_group.create_dataset(f"gas_rksz_faceon", (1024, 1024), dtype=np.float)
+            halo_group.create_dataset(f"dm_rksz_edgeon", (1024, 1024), dtype=np.float)
+            halo_group.create_dataset(f"dm_rksz_faceon", (1024, 1024), dtype=np.float)
 
         # Data assignment can be done through independent operations
         for zoom_id, data_handle in enumerate(zoom_handles):
             if zoom_id % num_processes == rank:
-                print(f"Rank {rank} processing halo ({zoom_id}/{macsis.num_zooms - 1}) | MACSIS name: {data_handle.run_name}")
-                rksz = rksz_map(data_handle, resolution=1024, alignment='faceon')
+                print(
+                    f"Rank {rank} processing halo ({zoom_id}/{macsis.num_zooms - 1}) | MACSIS name: {data_handle.run_name}")
+                rksz = rksz_map(data_handle, resolution=1024, alignment='edgeon')
                 f[f"{data_handle.run_name}/gas_rksz_edgeon"][:] = rksz
+                rksz = rksz_map(data_handle, resolution=1024, alignment='faceon')
+                f[f"{data_handle.run_name}/gas_rksz_faceon"][:] = rksz
+                rksz = dm_rotation_map(data_handle, resolution=1024, alignment='edgeon')
+                f[f"{data_handle.run_name}/dm_rksz_edgeon"][:] = rksz
+                rksz = dm_rotation_map(data_handle, resolution=1024, alignment='faceon')
+                f[f"{data_handle.run_name}/dm_rksz_faceon"][:] = rksz
 
 
 dump_to_hdf5_parallel()
@@ -200,10 +295,11 @@ if rank == 0:
     with h5py.File('rksz_gas.hdf5', 'r') as f:
         for i, halo in enumerate(f.keys()):
             print(f"Merging map from {halo}")
+            dataset_handle = f[f"{halo}/dm_rksz_edgeon"]
             if i == 0:
-                smoothed_map = f[f"{halo}/gas_rksz_edgeon"][:]
+                smoothed_map = dataset_handle[:]
             else:
-                smoothed_map += f[f"{halo}/gas_rksz_edgeon"][:]
+                smoothed_map += dataset_handle[:]
 
     # smoothed_map = np.ma.masked_where(np.log10(np.abs(smoothed_map)) < -20, smoothed_map)
     vlim = np.abs(smoothed_map).max()
