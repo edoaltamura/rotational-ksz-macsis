@@ -190,7 +190,7 @@ def dump_to_hdf5_parallel():
         for zoom_id, data_handle in enumerate(zoom_handles):
             if zoom_id % num_processes == rank:
                 print(f"Rank {rank} processing halo ({zoom_id}/{macsis.num_zooms - 1}) | MACSIS name: {data_handle.run_name}")
-                rksz = rksz_map(data_handle, resolution=1024, alignment='edgeon')
+                rksz = rksz_map(data_handle, resolution=1024, alignment='faceon')
                 f[f"{data_handle.run_name}/gas_rksz_edgeon"][:] = rksz
 
 
