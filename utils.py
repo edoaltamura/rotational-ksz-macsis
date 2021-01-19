@@ -58,6 +58,9 @@ def commune(data, obj: bool = False):
         dspl[j] = i
         i += cnts[j]
     rslt = np.empty(i, dtype=data.dtype)
-    comm.Allgatherv([data, cnts[rank]], [rslt, cnts, dspl, MPI._typedict[data.dtype.char]])
+    if obj:
+        comm.allgatherv([data, cnts[rank]], [rslt, cnts, dspl, MPI._typedict[data.dtype.char]])
+    else:
+        comm.Allgatherv([data, cnts[rank]], [rslt, cnts, dspl, MPI._typedict[data.dtype.char]])
     del data, cnts, dspl
     return rslt
