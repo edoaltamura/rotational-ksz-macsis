@@ -176,7 +176,6 @@ def dump_to_hdf5_parallel():
 
         # print(data_handle)
         zoom_handles = comm.allgather(data_handles)
-        print(data_handles)
         zoom_handles = np.concatenate(zoom_handles).ravel()
         print(zoom_handles)
 
