@@ -180,7 +180,7 @@ def dm_rotation_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
         neighbours=57,
         speedup_fac=2,
         dimension=3,
-    )
+    ).value
 
     # Rescale coordinates to CoP
     coordinates[:, 0] -= centre_of_potential[0]
@@ -245,7 +245,7 @@ def dm_rotation_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
     return smoothed_map
 
 
-def dump_to_hdf5_parallel():
+def dump_gas_to_hdf5_parallel():
     macsis = Macsis()
     with h5py.File('rksz_gas.hdf5', 'w', driver='mpio', comm=comm) as f:
 
@@ -269,10 +269,8 @@ def dump_to_hdf5_parallel():
             if rank == 0:
                 print(f"Structuring ({zoom_id}/{macsis.num_zooms - 1}): {data_handle.run_name}")
             halo_group = f.create_group(f"{data_handle.run_name}")
-            halo_group.create_dataset(f"gas_rksz_edgeon", (1024, 1024), dtype=np.float)
-            halo_group.create_dataset(f"gas_rksz_faceon", (1024, 1024), dtype=np.float)
-            halo_group.create_dataset(f"dm_rksz_edgeon", (1024, 1024), dtype=np.float)
-            halo_group.create_dataset(f"dm_rksz_faceon", (1024, 1024), dtype=np.float)
+            halo_group.create_dataset(f"map_edgeon", (1024, 1024), dtype=np.float)
+            halo_group.create_dataset(f"map_faceon", (1024, 1024), dtype=np.float)
 
         # Data assignment can be done through independent operations
         for zoom_id, data_handle in enumerate(zoom_handles):
@@ -280,22 +278,56 @@ def dump_to_hdf5_parallel():
                 print(
                     f"Rank {rank} processing halo ({zoom_id}/{macsis.num_zooms - 1}) | MACSIS name: {data_handle.run_name}")
                 rksz = rksz_map(data_handle, resolution=1024, alignment='edgeon')
-                f[f"{data_handle.run_name}/gas_rksz_edgeon"][:] = rksz
+                f[f"{data_handle.run_name}/map_edgeon"][:] = rksz
                 rksz = rksz_map(data_handle, resolution=1024, alignment='faceon')
-                f[f"{data_handle.run_name}/gas_rksz_faceon"][:] = rksz
+                f[f"{data_handle.run_name}/map_faceon"][:] = rksz
+
+
+def dump_dm_to_hdf5_parallel():
+    macsis = Macsis()
+    with h5py.File('rksz_dm.hdf5', 'w', driver='mpio', comm=comm) as f:
+
+        # Retrieve all zoom handles in parallel (slow otherwise)
+        data_handles = np.empty(0, dtype=np.object)
+        for zoom_id in range(macsis.num_zooms):
+            if zoom_id % num_processes == rank:
+                print(f"Collecting metadata for process ({zoom_id}/{macsis.num_zooms - 1})...")
+                data_handles = np.append(data_handles, macsis.get_zoom(zoom_id).get_redshift(-1))
+
+        # print(data_handle)
+        zoom_handles = comm.allgather(data_handles)
+        zoom_handles = np.concatenate(zoom_handles).ravel()
+        if rank == 0:
+            print([data_handle.run_name for data_handle in data_handles])
+
+        # Editing the structure of the file MUST be done collectively
+        if rank == 0:
+            print("Preparing structure of the file (collective operations)...")
+        for zoom_id, data_handle in enumerate(zoom_handles):
+            if rank == 0:
+                print(f"Structuring ({zoom_id}/{macsis.num_zooms - 1}): {data_handle.run_name}")
+            halo_group = f.create_group(f"{data_handle.run_name}")
+            halo_group.create_dataset(f"map_edgeon", (1024, 1024), dtype=np.float)
+            halo_group.create_dataset(f"map_faceon", (1024, 1024), dtype=np.float)
+
+        # Data assignment can be done through independent operations
+        for zoom_id, data_handle in enumerate(zoom_handles):
+            if zoom_id % num_processes == rank:
+                print(
+                    f"Rank {rank} processing halo ({zoom_id}/{macsis.num_zooms - 1}) | MACSIS name: {data_handle.run_name}")
                 rksz = dm_rotation_map(data_handle, resolution=1024, alignment='edgeon')
-                f[f"{data_handle.run_name}/dm_rksz_edgeon"][:] = rksz
+                f[f"{data_handle.run_name}/map_edgeon"][:] = rksz
                 rksz = dm_rotation_map(data_handle, resolution=1024, alignment='faceon')
-                f[f"{data_handle.run_name}/dm_rksz_faceon"][:] = rksz
+                f[f"{data_handle.run_name}/map_faceon"][:] = rksz
 
-
-dump_to_hdf5_parallel()
+# dump_gas_to_hdf5_parallel()
+dump_dm_to_hdf5_parallel()
 
 if rank == 0:
-    with h5py.File('rksz_gas.hdf5', 'r') as f:
+    with h5py.File('rksz_dm.hdf5', 'r') as f:
         for i, halo in enumerate(f.keys()):
             print(f"Merging map from {halo}")
-            dataset_handle = f[f"{halo}/dm_rksz_edgeon"]
+            dataset_handle = f[f"{halo}/map_edgeon"]
             if i == 0:
                 smoothed_map = dataset_handle[:]
             else:
