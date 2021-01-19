@@ -1,8 +1,15 @@
 import sys
 import os
+import numpy as np
 from types import ModuleType, FunctionType
 from gc import get_referents
 import psutil
+
+from mpi4py import MPI
+
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+nproc = comm.Get_size()
 
 total_memory = psutil.virtual_memory().total
 
@@ -37,3 +44,20 @@ def dump_memory_usage() -> None:
         f"[Resources] Memory usage: {memory / 1024 / 1024:.2f} MB "
         f"({memory / total_memory * 100:.2f}%)"
     ))
+
+
+def commune(data):
+    tmp = np.zeros(nproc, dtype=np.int)
+    tmp[rank] = len(data)
+    cnts = np.zeros(nproc, dtype=np.int)
+    comm.Allreduce([tmp, MPI.INT], [cnts, MPI.INT], op=MPI.SUM)
+    del tmp
+    dspl = np.zeros(nproc, dtype=np.int)
+    i = 0
+    for j in range(nproc):
+        dspl[j] = i
+        i += cnts[j]
+    rslt = np.zeros(i, dtype=data.dtype)
+    comm.Allgatherv([data, cnts[rank]], [rslt, cnts, dspl, MPI._typedict[data.dtype.char]])
+    del data, cnts, dspl
+    return rslt
