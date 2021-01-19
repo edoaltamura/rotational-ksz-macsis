@@ -162,20 +162,19 @@ def rksz_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
 
 def dump_to_hdf5_parallel():
     macsis = Macsis()
+    if rank == 0:
+        print('hi')
 
     with h5py.File('rksz_gas.hdf5', 'w', driver='mpio', comm=MPI.COMM_WORLD) as f:
 
         # Retrieve all zoom handles in parallel (slow otherwise)
-        data_handles = np.empty(num_processes, dtype=object)
-        data_handle = np.empty(macsis.num_zooms // num_processes + 1, dtype=object)
-        i = 0
+        data_handles = np.empty((num_processes, macsis.num_zooms // num_processes + 1), dtype=np.object)
         for zoom_id in range(macsis.num_zooms):
             if zoom_id % num_processes == rank:
                 print(f"Collecting metadata for process ({zoom_id}/{macsis.num_zooms - 1})...")
-                data_handle[i] = macsis.get_zoom(zoom_id).get_redshift(-1)
-                i += 1
+                data_handles[rank, zoom_id % num_processes] = macsis.get_zoom(zoom_id).get_redshift(-1)
+
         # print(data_handle)
-        data_handles[rank] = data_handle
         zoom_handles = comm.alltoall(data_handles)
         if rank == 0:
             print(zoom_handles)
