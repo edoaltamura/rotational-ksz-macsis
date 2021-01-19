@@ -171,7 +171,7 @@ def dump_to_hdf5_parallel():
                 data_handles = np.empty(0, dtype=object)
                 print(f"Collecting metadata for process ({zoom_id}/{macsis.num_zooms - 1})...")
                 data_handles = np.append(data_handles, macsis.get_zoom(zoom_id).get_redshift(-1))
-        zoom_handles = commune(data_handles)
+        zoom_handles = commune(data_handles, obj=True)
         if rank == 0:
             print(zoom_handles)
 
