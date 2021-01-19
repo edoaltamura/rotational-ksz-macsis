@@ -162,9 +162,6 @@ def rksz_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
 
 def dump_to_hdf5_parallel():
     macsis = Macsis()
-    if rank == 0:
-        print('hi')
-
     with h5py.File('rksz_gas.hdf5', 'w', driver='mpio', comm=comm) as f:
 
         # Retrieve all zoom handles in parallel (slow otherwise)
