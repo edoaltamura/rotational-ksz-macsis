@@ -176,7 +176,7 @@ def dump_to_hdf5_parallel():
 
         # print(data_handle)
         zoom_handles = comm.allgather(data_handles)
-        if rank == 0:
+        if rank == 1:
             zoom_handles = np.concatenate(zoom_handles).ravel()
             print('Rank', rank, zoom_handles)
 
@@ -184,6 +184,8 @@ def dump_to_hdf5_parallel():
         if rank == 0:
             print("Preparing structure of the file (collective operations)...")
         for zoom_id, data_handle in enumerate(zoom_handles):
+            if rank == 0:
+                print(f"Structuring ({zoom_id}/{macsis.num_zooms - 1}): {data_handle.run_name}")
             halo_group = f.create_group(f"{data_handle.run_name}")
             halo_group.create_dataset(f"gas_rksz_edgeon", (1024, 1024), dtype=np.float)
 
