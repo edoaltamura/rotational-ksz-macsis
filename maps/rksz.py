@@ -174,8 +174,8 @@ def dm_rotation_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
 
     # Generate smoothing lengths for dark matter
     smoothing_lengths = generate_smoothing_lengths(
-        coordinates,
-        data.read_header('BoxSize'),
+        coordinates * unyt.Mpc,
+        data.read_header('BoxSize') * unyt.Mpc,
         kernel_gamma=1.8,
         neighbours=57,
         speedup_fac=2,
