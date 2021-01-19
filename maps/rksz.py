@@ -168,15 +168,15 @@ def dump_to_hdf5_parallel():
     with h5py.File('rksz_gas.hdf5', 'w', driver='mpio', comm=comm) as f:
 
         # Retrieve all zoom handles in parallel (slow otherwise)
-        data_handles = np.empty((num_processes, macsis.num_zooms // num_processes + 1), dtype=np.object)
+        data_handles = np.empty(macsis.num_zooms, dtype=np.object)
         for zoom_id in range(macsis.num_zooms):
             if zoom_id % num_processes == rank:
                 print(f"Collecting metadata for process ({zoom_id}/{macsis.num_zooms - 1})...")
-                data_handles[zoom_id % num_processes, rank] = macsis.get_zoom(zoom_id).get_redshift(-1)
+                data_handles[zoom_id % num_processes + rank * zoom_id // num_processes] = macsis.get_zoom(zoom_id).get_redshift(-1)
 
         # print(data_handle)
-        zoom_handles = comm.allgather(data_handles)
-        zoom_handles = np.concatenate(zoom_handles).ravel()
+        zoom_handles = comm.allgather(data_handles, root=0)
+        # zoom_handles = np.concatenate(zoom_handles).ravel()
         print('Rank', rank, zoom_handles)
 
         # Editing the structure of the file MUST be done collectively
@@ -184,8 +184,7 @@ def dump_to_hdf5_parallel():
             print("Preparing structure of the file (collective operations)...")
         for zoom_id, data_handle in enumerate(zoom_handles):
             halo_group = f.create_group(f"{data_handle.run_name}")
-            rksz = rksz_map(data_handle, resolution=1024, alignment='edgeon')
-            halo_group.create_dataset(f"gas_rksz_edgeon", rksz.shape, dtype=rksz.dtype)
+            halo_group.create_dataset(f"gas_rksz_edgeon", (1024, 1024), dtype=np.float)
 
         # Data assignment can be done through independent operations
         for zoom_id, data_handle in enumerate(zoom_handles):
