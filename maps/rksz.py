@@ -167,12 +167,14 @@ def dump_to_hdf5_parallel():
 
         # Retrieve all zoom handles in parallel (slow otherwise)
         data_handles = np.empty(num_processes, dtype=object)
-        data_handle = np.empty(0, dtype=object)
+        data_handle = np.empty(macsis.num_zooms // num_processes + 1, dtype=object)
+        i = 0
         for zoom_id in range(macsis.num_zooms):
             if zoom_id % num_processes == rank:
                 print(f"Collecting metadata for process ({zoom_id}/{macsis.num_zooms - 1})...")
-                data_handle = np.append(data_handle, macsis.get_zoom(zoom_id).get_redshift(-1))
-        print(data_handle)
+                data_handle[i] = macsis.get_zoom(zoom_id).get_redshift(-1)
+                i += 1
+        # print(data_handle)
         data_handles[rank] = data_handle
         zoom_handles = comm.alltoall(data_handles)
         zoom_handles = np.concatenate(zoom_handles).ravel()
