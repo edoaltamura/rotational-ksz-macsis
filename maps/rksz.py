@@ -171,7 +171,8 @@ def dump_to_hdf5_parallel():
             if zoom_id % num_processes == rank:
                 print(f"Collecting metadata for process ({zoom_id}/{macsis.num_zooms - 1})...")
                 data_handles[zoom_id % num_processes:rank] = macsis.get_zoom(zoom_id).get_redshift(-1)
-        zoom_handles = comm.alltoall(data_handles).flatten()
+        zoom_handles = comm.alltoall(data_handles)
+        zoom_handles = np.concatenate(zoom_handles).ravel()
         if rank == 0:
             print(zoom_handles)
 
