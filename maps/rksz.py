@@ -26,7 +26,6 @@ rank = comm.rank
 
 from read import MacsisDataset
 from register import Macsis
-from utils import commune
 
 ksz_const = - unyt.thompson_cross_section / 1.16 / unyt.speed_of_light / unyt.proton_mass
 tsz_const = unyt.thompson_cross_section * unyt.boltzmann_constant / 1.16 / \
@@ -171,8 +170,8 @@ def dump_to_hdf5_parallel():
         for zoom_id in range(macsis.num_zooms):
             if zoom_id % num_processes == rank:
                 print(f"Collecting metadata for process ({zoom_id}/{macsis.num_zooms - 1})...")
-                data_handles[rank:zoom_id % num_processes] = macsis.get_zoom(zoom_id).get_redshift(-1)
-        zoom_handles = MPI.COMM_WORLD.alltoall(data_handles)
+                data_handles[zoom_id % num_processes:rank] = macsis.get_zoom(zoom_id).get_redshift(-1)
+        zoom_handles = comm.alltoall(data_handles).flatten()
         if rank == 0:
             print(zoom_handles)
 
