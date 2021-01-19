@@ -175,7 +175,7 @@ def dump_to_hdf5_parallel():
                 data_handles[zoom_id % num_processes + rank * zoom_id // num_processes] = macsis.get_zoom(zoom_id).get_redshift(-1)
 
         # print(data_handle)
-        zoom_handles = comm.allgather(data_handles, root=0)
+        zoom_handles = comm.allgather(data_handles)
         # zoom_handles = np.concatenate(zoom_handles).ravel()
         print('Rank', rank, zoom_handles)
 
