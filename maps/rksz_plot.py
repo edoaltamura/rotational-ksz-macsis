@@ -25,7 +25,7 @@ projections = ['x', 'y', 'z', 'faceon', 'edgeon']
 fig, ax = plt.subplots(nrows=1, ncols=5)
 
 with h5py.File(f'{Macsis().output_dir}/rksz_gas.hdf5', 'r') as f:
-    for projection, axes in zip(projections, ax.flat):
+    for projection, axes in zip(projections, ax):
         for i, halo in enumerate(f.keys()):
             dataset = f[f"{halo}/map_{projection}"][:]
             print((
@@ -56,5 +56,6 @@ with h5py.File(f'{Macsis().output_dir}/rksz_gas.hdf5', 'r') as f:
         plt.colorbar(im, cax=cax, label=r'$\sum y_{ksz}$')
         axes.set_title(f"Projection {projection}")
 
+plt.tight_layout()
 plt.show()
 plt.close()
