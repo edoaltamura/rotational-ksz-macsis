@@ -284,11 +284,12 @@ def dump_to_hdf5_parallel(particle_type: str = 'gas'):
 # dump_to_hdf5_parallel('gas')
 
 if rank == 0:
+    projection = 'x'
     with h5py.File(f'{Macsis().output_dir}/rksz_gas.hdf5', 'r') as f:
         for i, halo in enumerate(f.keys()):
-            dataset = f[f"{halo}/map_x"][:]
+            dataset = f[f"{halo}/map_{projection}"][:]
             print((
-                f"Merging map from {halo} | "
+                f"Merging map_{projection} from {halo} | "
                 f"shape: {dataset.shape} | "
                 f"size: {dataset.nbytes / 1024 / 1024} MB"
             ))
@@ -299,7 +300,9 @@ if rank == 0:
 
     # smoothed_map = np.ma.masked_where(np.log10(np.abs(smoothed_map)) < -20, smoothed_map)
     vlim = np.abs(smoothed_map).max()
-    plt.imshow(
+
+    fig, axes = plt.subplots()
+    im = axes.imshow(
         smoothed_map,
         norm=SymLogNorm(linthresh=0.01, linscale=1, vmin=-vlim, vmax=vlim),
         cmap="PRGn",
@@ -308,5 +311,8 @@ if rank == 0:
     )
     # plt.plot([0, angular_momentum_r500_rotated[0]], [0, angular_momentum_r500_rotated[1]], marker='o')
     plt.axis('off')
+    cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
+    plt.colorbar(im, cax=cbar_ax)
+    plt.title(f"Projection {projection}")
     plt.show()
     plt.close()
