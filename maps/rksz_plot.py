@@ -45,6 +45,7 @@ with h5py.File(f'{Macsis().output_dir}/rksz_gas.hdf5', 'r') as f:
 
 # smoothed_map = np.ma.masked_where(np.log10(np.abs(smoothed_map)) < -20, smoothed_map)
 # Get maximum limits
+print(display_maps)
 max_list = []
 for p in display_maps:
     max_list.append(np.abs(display_maps[p]).max())
