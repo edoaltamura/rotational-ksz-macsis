@@ -328,7 +328,11 @@ if rank == 0:
     with h5py.File(f'{Macsis().output_dir}/rksz_gas.hdf5', 'r') as f:
         for i, halo in enumerate(f.keys()):
             dataset_handle = f[f"{halo}/map_edgeon"]
-            print(f"Merging map from {halo} | shape: {dataset_handle.shape} | size: {dataset_handle.nbytes / 1024 / 1024} MB")
+            print((
+                f"Merging map from {halo} | "
+                f"shape: {dataset_handle.shape} | "
+                f"size: {dataset_handle.nbytes / 1024 / 1024} MB"
+            ))
             if i == 0:
                 smoothed_map = dataset_handle[:]
             else:
