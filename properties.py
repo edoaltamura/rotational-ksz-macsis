@@ -48,31 +48,31 @@ def rotate(coord: np.ndarray, angular_momentum_hot_gas: np.ndarray, tilt: str = 
     return new_coord
 
 
-def rksz_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
+def angular_momentum(halo, particle_type: str = 'gas'):
+    # Switch the type of map between gas and DM
+    if particle_type == 'gas':
+        pt_number = '0'
+    elif particle_type == 'dm':
+        pt_number = '1'
+
     data = MacsisDataset(halo)
 
     # Read data
-    coordinates = data.read_snapshot('PartType0/Coordinates')
-    densities = data.read_snapshot('PartType0/Density')
-    masses = data.read_snapshot('PartType0/Mass')
-    velocities = data.read_snapshot('PartType0/Velocity')
-    temperatures = data.read_snapshot('PartType0/Temperature')
-    smoothing_lengths = data.read_snapshot('PartType0/SmoothingLength')
+    coordinates = data.read_snapshot(f'PartType{pt_number}/Coordinates')
+    masses = data.read_snapshot(f'PartType{pt_number}/Mass')
+    velocities = data.read_snapshot(f'PartType{pt_number}/Velocity')
 
     # Remember that the largest FOF has index 1
     centre_of_potential = data.read_catalogue_subfindtab('FOF/GroupCentreOfPotential')[1]
     r500_crit = data.read_catalogue_subfindtab('FOF/Group_R_Crit500')[1]
-    m500_crit = data.read_catalogue_subfindtab('FOF/Group_M_Crit500')[1]
 
     # Select ionised hot gas
-    temperature_cut = np.where(temperatures > 1.e5)[0]
-
-    coordinates = coordinates[temperature_cut]
-    densities = densities[temperature_cut]
-    masses = masses[temperature_cut]
-    velocities = velocities[temperature_cut]
-    temperatures = temperatures[temperature_cut]
-    smoothing_lengths = smoothing_lengths[temperature_cut]
+    if particle_type == 'gas':
+        temperatures = data.read_snapshot(f'PartType{pt_number}/Temperature')
+        temperature_cut = np.where(temperatures > 1.e5)[0]
+        coordinates = coordinates[temperature_cut]
+        masses = masses[temperature_cut]
+        velocities = velocities[temperature_cut]
 
     # Rescale coordinates to CoP
     coordinates[:, 0] -= centre_of_potential[0]
@@ -97,57 +97,12 @@ def rksz_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
     velocities_rest_frame[:, 1] -= mean_velocity_r500[1]
     velocities_rest_frame[:, 2] -= mean_velocity_r500[2]
 
-    # Rotate coordinates and velocities
-    coordinates_edgeon = rotate(coordinates, angular_momentum_r500, tilt=alignment)
-    velocities_rest_frame_edgeon = rotate(velocities_rest_frame, angular_momentum_r500, tilt=alignment)
+    return angular_momentum_r500
 
-    # Rotate angular momentum vector for cross check
-    angular_momentum_r500_rotated = rotate(
-        angular_momentum_r500 / np.linalg.norm(angular_momentum_r500), angular_momentum_r500, tilt=alignment
-    ) * r500_crit / 2
 
-    compton_y = unyt.unyt_array(
-        masses * velocities_rest_frame_edgeon[:, 2], 1.e10 * unyt.Solar_Mass * 1.e3 * unyt.km / unyt.s
-    ) * ksz_const / unyt.unyt_quantity(1., unyt.Mpc) ** 2
-    compton_y = compton_y.value
-
-    # Restrict map to 2*R500
-    spatial_filter = np.where(
-        (np.abs(coordinates_edgeon[:, 0]) < r500_crit / 2) &
-        (np.abs(coordinates_edgeon[:, 1]) < r500_crit / 2) &
-        (np.abs(coordinates_edgeon[:, 2]) < r500_crit / 2)
-    )[0]
-
-    coordinates_edgeon = coordinates_edgeon[spatial_filter]
-    velocities_rest_frame_edgeon = velocities_rest_frame_edgeon[spatial_filter]
-    smoothing_lengths = smoothing_lengths[spatial_filter]
-    compton_y = compton_y[spatial_filter]
-
-    # Make map using swiftsimio
-    x = (coordinates_edgeon[:, 0] - coordinates_edgeon[:, 0].min()) / (
-            coordinates_edgeon[:, 0].max() - coordinates_edgeon[:, 0].min())
-    y = (coordinates_edgeon[:, 1] - coordinates_edgeon[:, 1].min()) / (
-            coordinates_edgeon[:, 1].max() - coordinates_edgeon[:, 1].min())
-    h = smoothing_lengths / (coordinates_edgeon[:, 0].max() - coordinates_edgeon[:, 0].min())
-
-    # Gather and handle coordinates to be processed
-    x = np.asarray(x, dtype=np.float64)
-    y = np.asarray(y, dtype=np.float64)
-    m = np.asarray(compton_y, dtype=np.float32)
-    h = np.asarray(h, dtype=np.float32)
-    smoothed_map = scatter(x=x, y=y, m=m, h=h, res=resolution).T
-
-    print(compton_y.min(), compton_y.max(), smoothed_map.min(), smoothed_map.max())
-
-    return smoothed_map
-
-def dump_to_hdf5_parallel(particle_type: str = 'gas', resolution: int = 1024):
-
-    # Switch the type of map between gas and DM
-    generate_map = rksz_map if particle_type == 'gas' else dm_rotation_map
-
+def dump_to_hdf5_parallel():
     macsis = Macsis()
-    with h5py.File(f'{macsis.output_dir}/rksz_{particle_type}.hdf5', 'w', driver='mpio', comm=comm) as f:
+    with h5py.File(f'{macsis.output_dir}/properties.hdf5', 'w', driver='mpio', comm=comm) as f:
 
         # Retrieve all zoom handles in parallel (slow otherwise)
         data_handles = np.empty(0, dtype=np.object)
@@ -159,6 +114,8 @@ def dump_to_hdf5_parallel(particle_type: str = 'gas', resolution: int = 1024):
         zoom_handles = comm.allgather(data_handles)
         zoom_handles = np.concatenate(zoom_handles).ravel()
         zoom_handles = zoom_handles[~pd.isnull(zoom_handles)]
+        sort_keys = np.argsort(np.array([int(z.run_name[:-4]) for z in zoom_handles]))
+        zoom_handles = sort_keys[sort_keys]
 
         if rank == 0:
             print([data_handle.run_name for data_handle in data_handles])
@@ -166,14 +123,13 @@ def dump_to_hdf5_parallel(particle_type: str = 'gas', resolution: int = 1024):
         # Editing the structure of the file MUST be done collectively
         if rank == 0:
             print("Preparing structure of the file (collective operations)...")
-        for zoom_id, data_handle in enumerate(zoom_handles):
-            if rank == 0:
-                print(f"Structuring ({zoom_id:03d}/{macsis.num_zooms - 1}): {data_handle.run_name}")
-            if data_handle.run_name not in f.keys():
-                halo_group = f.create_group(f"{data_handle.run_name}")
-            for projection in ['x', 'y', 'z', 'faceon', 'edgeon']:
-                if projection not in halo_group.keys():
-                    halo_group.create_dataset(f"map_{projection}", (resolution, resolution), dtype=np.float)
+
+        names = f.create_dataset("names", (macsis.num_zooms,), dtype=np.str)
+        m_500crit = f.create_dataset("m_500crit", (macsis.num_zooms,), dtype=np.float)
+        r_500crit = f.create_dataset("r_500crit", (macsis.num_zooms,), dtype=np.float)
+        angular_momentum_hotgas_r500 = f.create_dataset(
+            "angular_momentum_hotgas_r500", (macsis.num_zooms,), dtype=np.float
+        )
 
         # Data assignment can be done through independent operations
         for zoom_id, data_handle in enumerate(zoom_handles):
@@ -182,13 +138,13 @@ def dump_to_hdf5_parallel(particle_type: str = 'gas', resolution: int = 1024):
                     f"Rank {rank:03d} processing halo ({zoom_id:03d}/{macsis.num_zooms - 1}) | "
                     f"MACSIS name: {data_handle.run_name}"
                 ))
-                for projection in ['x', 'y', 'z', 'faceon', 'edgeon']:
-                    # Check that the arrays is not all zeros
-                    if not np.any(f[f"{data_handle.run_name}/map_{projection}"][:]):
-                        rksz = generate_map(data_handle, resolution=resolution, alignment=projection)
-                        f[f"{data_handle.run_name}/map_{projection}"][:] = rksz
+
+                names[zoom_id] = data_handle.run_name
+                m_500crit[zoom_id] = data_handle.read_catalogue_subfindtab('FOF/Group_M_Crit500')[1]
+                r_500crit[zoom_id] = data_handle.read_catalogue_subfindtab('FOF/Group_R_Crit500')[1]
+                angular_momentum_hotgas_r500[zoom_id] = angular_momentum(data_handle, particle_type='gas')
 
 
 if __name__ == "__main__":
 
-    dump_to_hdf5_parallel('dm', resolution=1024)
+    dump_to_hdf5_parallel()

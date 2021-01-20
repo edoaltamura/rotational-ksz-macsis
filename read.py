@@ -18,7 +18,6 @@ class MacsisDataset(object):
     catalogue_particles_file: h5py.File
 
     def __init__(self, redshift_obj: Redshift):
-
         self.run_name = redshift_obj.run_name
         self.scale_factor = redshift_obj.scale_factor
         self.a = redshift_obj.a
@@ -58,9 +57,9 @@ class MacsisDataset(object):
         return self.read_dataset('catalogue_particles_file', dataset_path)
 
 
-
 if __name__ == "__main__":
     from register import Macsis
+
     macsis = Macsis()
     for i in range(3):
         halo_handle = macsis.get_zoom(i).get_redshift(-1)
