@@ -49,7 +49,7 @@ for p in display_maps:
     max_list.append(np.abs(display_maps[p]).max())
 vlim = max(max_list)
 
-fig, axes = plt.subplots(1, 5, figsize=(3, 17))
+fig, axes = plt.subplots(1, 5, figsize=(17, 3))
 
 for ax, projection, smoothed_map in zip(axes.flat, projections, display_maps.values()):
 
