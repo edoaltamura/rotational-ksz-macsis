@@ -27,7 +27,7 @@ except:
 
 Tcmb0 = 2.7255
 projections = ['x', 'y', 'z', 'faceon', 'edgeon']
-fig, ax = plt.subplots(nrows=1, ncols=5)
+fig, ax = plt.subplots(nrows=1, ncols=len(projections))
 
 with h5py.File(f'{Macsis().output_dir}/rksz_gas.hdf5', 'r') as f:
     for projection, axes in zip(projections, ax):
@@ -56,11 +56,11 @@ with h5py.File(f'{Macsis().output_dir}/rksz_gas.hdf5', 'r') as f:
         del smoothed_map
         # plt.plot([0, angular_momentum_r500_rotated[0]], [0, angular_momentum_r500_rotated[1]], marker='o')
         axes.set_axis_off()
-        divider = make_axes_locatable(axes)
-        cax = divider.append_axes("right", size="5%", pad=0.05)
-        plt.colorbar(im, cax=cax, label=r'$\sum y_{ksz}$')
         axes.set_title(f"Projection {projection}")
 
-plt.tight_layout()
+divider = make_axes_locatable(axes)
+cax = divider.append_axes("right", size="5%", pad=0.05)
+plt.colorbar(im, cax=cax, label=r'$\sum y_{ksz}$')
+fig.tight_layout()
 plt.show()
 plt.close()
