@@ -30,6 +30,7 @@ from register import Macsis
 ksz_const = - unyt.thompson_cross_section / 1.16 / unyt.speed_of_light / unyt.proton_mass
 tsz_const = unyt.thompson_cross_section * unyt.boltzmann_constant / 1.16 / \
             unyt.speed_of_light ** 2 / unyt.proton_mass / unyt.electron_mass
+Tcmb0 = 2.7255
 
 
 def rotate(coord: np.ndarray, angular_momentum_hot_gas: np.ndarray, tilt: str = 'x'):
@@ -303,7 +304,7 @@ if rank == 0:
 
     fig, axes = plt.subplots()
     im = axes.imshow(
-        smoothed_map,
+        smoothed_map * Tcmb0 * 1.e6,
         norm=SymLogNorm(linthresh=0.01, linscale=1, vmin=-vlim, vmax=vlim),
         cmap="PRGn",
         origin="lower",
@@ -312,7 +313,7 @@ if rank == 0:
     # plt.plot([0, angular_momentum_r500_rotated[0]], [0, angular_momentum_r500_rotated[1]], marker='o')
     plt.axis('off')
     cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
-    plt.colorbar(im, cax=cbar_ax)
-    plt.title(f"Projection {projection}")
+    fig.colorbar(im, cax=cbar_ax, label=r'$\mu$K')
+    axes.set_title(f"Projection {projection}")
     plt.show()
     plt.close()
