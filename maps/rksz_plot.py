@@ -7,6 +7,7 @@ from tqdm import tqdm
 from matplotlib import pyplot as plt
 from matplotlib.colors import LogNorm, SymLogNorm
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from matplotlib.patches import Circle
 
 # Make the register backend visible to the script
 sys.path.append(
@@ -29,22 +30,17 @@ except:
 Tcmb0 = 2.7255
 projections = ['x', 'y', 'z', 'faceon', 'edgeon']
 display_maps = dict()
-
+print("Collecting data from file...")
 with h5py.File(f'{Macsis().output_dir}/rksz_gas.hdf5', 'r') as f:
     for projection in projections:
         for i, halo in enumerate(tqdm(f.keys(), desc=f"Merging map_{projection}")):
             dataset = f[f"{halo}/map_{projection}"][:]
-            # print((
-            #     f"Merging map_{projection} from {halo} | "
-            #     f"shape: {dataset.shape} | "
-            #     f"size: {dataset.nbytes / 1024 / 1024} MB"
-            # ))
             if i == 0:
                 display_maps[projection] = dataset
             else:
                 display_maps[projection] += dataset
 
-# smoothed_map = np.ma.masked_where(np.log10(np.abs(smoothed_map)) < -20, smoothed_map)
+print("Composing plot figure...")
 # Get maximum limits
 max_list = []
 for p in display_maps:
@@ -60,11 +56,19 @@ for ax, projection, smoothed_map in zip(axes.flat, projections, display_maps.val
         norm=SymLogNorm(linthresh=0.01, linscale=1, vmin=-vlim, vmax=vlim),
         cmap="PRGn",
         origin="lower",
-        extent=(-1, 1, -1, 1),
+        extent=(-2, 2, -2, 2),
     )
     # plt.plot([0, angular_momentum_r500_rotated[0]], [0, angular_momentum_r500_rotated[1]], marker='o')
     ax.set_axis_off()
     ax.set_title(f"Projection {projection}")
+    r500_circle = Circle((0, 0), 1, fill=False, linewidth=1, linestyle='-', color='k')
+    ax.add_artist(r500_circle)
+    ax.text(0, 1, r'$R_{500, crit}$',
+            horizontalalignment='center',
+            verticalalignment='bottom',
+            transform=ax.transAxes,
+            color='k'
+            )
 
 divider = make_axes_locatable(ax)
 cax = divider.append_axes("right", size="5%", pad=0.05)
