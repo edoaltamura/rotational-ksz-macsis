@@ -55,7 +55,7 @@ with h5py.File(f'{Macsis().output_dir}/rksz_gas.hdf5', 'r') as f:
         axes.set_axis_off()
         divider = make_axes_locatable(axes)
         cax = divider.append_axes("right", size="5%", pad=0.05)
-        axes.colorbar(im, cax=cax, label=r'$\sum y_{ksz}$')
+        plt.colorbar(im, cax=cax, label=r'$\sum y_{ksz}$')
         axes.set_title(f"Projection {projection}")
 
 plt.show()
