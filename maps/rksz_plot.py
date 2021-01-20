@@ -34,11 +34,11 @@ with h5py.File(f'{Macsis().output_dir}/rksz_gas.hdf5', 'r') as f:
     for projection in projections:
         for i, halo in tqdm(enumerate(f.keys()), desc=f"Merging map_{projection}"):
             dataset = f[f"{halo}/map_{projection}"][:]
-            print((
-                f"Merging map_{projection} from {halo} | "
-                f"shape: {dataset.shape} | "
-                f"size: {dataset.nbytes / 1024 / 1024} MB"
-            ))
+            # print((
+            #     f"Merging map_{projection} from {halo} | "
+            #     f"shape: {dataset.shape} | "
+            #     f"size: {dataset.nbytes / 1024 / 1024} MB"
+            # ))
             if i == 0:
                 display_maps[projection] = dataset
             else:
