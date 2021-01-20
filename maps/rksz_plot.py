@@ -20,6 +20,11 @@ sys.path.append(
 from read import MacsisDataset
 from register import Macsis
 
+try:
+    plt.style.use("mnras.mplstyle")
+except:
+    pass
+
 Tcmb0 = 2.7255
 projections = ['x', 'y', 'z', 'faceon', 'edgeon']
 fig, ax = plt.subplots(nrows=1, ncols=5)
