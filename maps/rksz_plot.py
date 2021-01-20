@@ -23,7 +23,7 @@ from read import MacsisDataset
 from register import Macsis
 
 try:
-    plt.style.use("mnras.mplstyle")
+    plt.style.use("../mnras.mplstyle")
 except:
     pass
 
@@ -42,14 +42,14 @@ with h5py.File(f'{macsis.output_dir}/rksz_gas.hdf5', 'r') as f:
             else:
                 display_maps[projection] += dataset
 
-print("Composing plot figure...")
 # Get maximum limits
 max_list = []
 for p in display_maps:
     max_list.append(np.abs(display_maps[p]).max())
 vlim = max(max_list)
 
-fig, axes = plt.subplots(1, 5, figsize=(17, 3))
+print("Composing plot figure...")
+fig, axes = plt.subplots(1, 5, figsize=(17, 3), sharex=True, sharey=True, )
 
 for ax, projection, smoothed_map in zip(axes.flat, projections, display_maps.values()):
 
@@ -60,7 +60,6 @@ for ax, projection, smoothed_map in zip(axes.flat, projections, display_maps.val
         origin="lower",
         extent=(-2, 2, -2, 2),
     )
-    # plt.plot([0, angular_momentum_r500_rotated[0]], [0, angular_momentum_r500_rotated[1]], marker='o')
     ax.set_axis_off()
     ax.set_title(f"Projection {projection}")
     r500_circle = Circle((0, 0), 1, fill=False, linewidth=1, linestyle='-', color='k')
@@ -71,6 +70,7 @@ for ax, projection, smoothed_map in zip(axes.flat, projections, display_maps.val
             # transform=ax.transAxes,
             color='k')
 
+plt.subplots_adjust(wspace=0.05, hspace=0.05)
 divider = make_axes_locatable(ax)
 cax = divider.append_axes("right", size="5%", pad=0.05)
 plt.colorbar(im, cax=cax, label=r'$\sum y_{ksz}$')
