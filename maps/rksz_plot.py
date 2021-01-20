@@ -27,10 +27,10 @@ except:
 
 Tcmb0 = 2.7255
 projections = ['x', 'y', 'z', 'faceon', 'edgeon']
-fig, ax = plt.subplots(nrows=1, ncols=len(projections))
+display_maps = dict()
 
 with h5py.File(f'{Macsis().output_dir}/rksz_gas.hdf5', 'r') as f:
-    for projection, axes in zip(projections, ax):
+    for projection in projections:
         for i, halo in enumerate(f.keys()):
             dataset = f[f"{halo}/map_{projection}"][:]
             print((
@@ -39,28 +39,35 @@ with h5py.File(f'{Macsis().output_dir}/rksz_gas.hdf5', 'r') as f:
                 f"size: {dataset.nbytes / 1024 / 1024} MB"
             ))
             if i == 0:
-                smoothed_map = dataset
+                display_maps[projection] = dataset
             else:
-                smoothed_map += dataset
+                display_maps[projection] += dataset
 
-        # smoothed_map = np.ma.masked_where(np.log10(np.abs(smoothed_map)) < -20, smoothed_map)
-        vlim = np.abs(smoothed_map).max()
+# smoothed_map = np.ma.masked_where(np.log10(np.abs(smoothed_map)) < -20, smoothed_map)
+# Get maximum limits
+max_list = []
+for p in display_maps:
+    max_list.append(np.abs(display_maps[p]).max())
+vlim = max(max_list)
 
-        im = axes.imshow(
-            smoothed_map,
-            norm=SymLogNorm(linthresh=0.01, linscale=1, vmin=-vlim, vmax=vlim),
-            cmap="PRGn",
-            origin="lower",
-            extent=(-1, 1, -1, 1),
-        )
-        del smoothed_map
-        # plt.plot([0, angular_momentum_r500_rotated[0]], [0, angular_momentum_r500_rotated[1]], marker='o')
-        axes.set_axis_off()
-        axes.set_title(f"Projection {projection}")
+fig, axes = plt.subplots(nrows=1, ncols=len(display_maps))
+
+for projection, smoothed_map in zip(projections, display_maps.values()):
+
+    im = axes.imshow(
+        smoothed_map,
+        norm=SymLogNorm(linthresh=0.01, linscale=1, vmin=-vlim, vmax=vlim),
+        cmap="PRGn",
+        origin="lower",
+        extent=(-1, 1, -1, 1),
+    )
+    # plt.plot([0, angular_momentum_r500_rotated[0]], [0, angular_momentum_r500_rotated[1]], marker='o')
+    axes.set_axis_off()
+    axes.set_title(f"Projection {projection}")
 
 divider = make_axes_locatable(axes)
 cax = divider.append_axes("right", size="5%", pad=0.05)
 plt.colorbar(im, cax=cax, label=r'$\sum y_{ksz}$')
-fig.tight_layout()
+# fig.tight_layout()
 plt.show()
 plt.close()
