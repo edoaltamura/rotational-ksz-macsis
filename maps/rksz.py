@@ -322,10 +322,10 @@ def dump_dm_to_hdf5_parallel():
 
 
 # dump_gas_to_hdf5_parallel()
-# dump_dm_to_hdf5_parallel()
+dump_dm_to_hdf5_parallel()
 
 if rank == 0:
-    with h5py.File(f'{Macsis().output_dir}/rksz_gas.hdf5', 'r') as f:
+    with h5py.File(f'{Macsis().output_dir}/rksz_dm.hdf5', 'r') as f:
         for i, halo in enumerate(f.keys()):
             dataset = f[f"{halo}/map_faceon"][:]
             print((
