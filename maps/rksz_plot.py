@@ -49,10 +49,10 @@ for p in display_maps:
 vlim = max(max_list)
 
 print("Composing plot figure...")
-fig, axes = plt.subplots(1, 5, figsize=(15, 3), sharex=True, sharey=True)
+fig, axes = plt.subplots(1, 5, figsize=(15, 3), sharex=True, sharey=True,
+                         gridspec_kw={'wspace': 0, 'hspace': 0})
 
 for ax, projection, smoothed_map in zip(axes.flat, projections, display_maps.values()):
-
     im = ax.imshow(
         smoothed_map,
         norm=SymLogNorm(linthresh=0.01, linscale=1, vmin=-vlim, vmax=vlim),
@@ -70,8 +70,7 @@ for ax, projection, smoothed_map in zip(axes.flat, projections, display_maps.val
             # transform=ax.transAxes,
             color='k')
 
-fig.set_title('All clusters')
-plt.subplots_adjust(wspace=0.05, hspace=0.05)
+fig.suptitle('All clusters')
 divider = make_axes_locatable(ax)
 cax = divider.append_axes("right", size="5%", pad=0.05)
 plt.colorbar(im, cax=cax, label=r'$\sum y_{ksz}$')
