@@ -155,25 +155,9 @@ def dm_rotation_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
     m500_crit = data.read_catalogue_subfindtab('FOF/Group_M_Crit500')[1]
 
     # Generate smoothing lengths for dark matter
-    boxsize = unyt.unyt_array(
-        np.array([
-            coordinates[:, 0].max() - coordinates[:, 0].min() + 2.,
-            coordinates[:, 1].max() - coordinates[:, 1].min() + 2.,
-            coordinates[:, 2].max() - coordinates[:, 2].min() + 2.
-        ]),
-        unyt.Mpc
-    )
-    high_res_coords_shifted = unyt.unyt_array(
-        np.array([
-            coordinates[:, 0] - coordinates[:, 0].min() + 1.,
-            coordinates[:, 1] - coordinates[:, 1].min() + 1.,
-            coordinates[:, 2] - coordinates[:, 2].min() + 1.
-        ]),
-        unyt.Mpc
-    )
     smoothing_lengths = generate_smoothing_lengths(
-        high_res_coords_shifted,
-        boxsize,
+        coordinates * unyt.Mpc,
+        data.read_header('BoxSize') * unyt.Mpc,
         kernel_gamma=1.8,
         neighbours=57,
         speedup_fac=2,
