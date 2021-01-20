@@ -32,40 +32,20 @@ tsz_const = unyt.thompson_cross_section * unyt.boltzmann_constant / 1.16 / \
             unyt.speed_of_light ** 2 / unyt.proton_mass / unyt.electron_mass
 
 
-def rotate_coordinates(coord: np.ndarray, angular_momentum_hot_gas: np.ndarray, tilt: str = 'y'):
-    x, y, z = coord.T
-
-    if tilt == 'y':
-        new_coord = np.vstack((x, z, y)).T
-    elif tilt == 'z':
-        new_coord = np.vstack((x, y, z)).T
-    elif tilt == 'x':
-        new_coord = np.vstack((z, y, x)).T
-    elif tilt == 'faceon':
-        face_on_rotation_matrix = rotation_matrix_from_vector(angular_momentum_hot_gas)
-        new_coord = np.matmul(face_on_rotation_matrix, coord.T).T
-    elif tilt == 'edgeon':
-        edge_on_rotation_matrix = rotation_matrix_from_vector(angular_momentum_hot_gas, axis='y')
-        new_coord = np.matmul(edge_on_rotation_matrix, coord.T).T
-    return new_coord
-
-
-def rotate_velocities(vel: np.ndarray, angular_momentum_hot_gas: np.ndarray, tilt: str = 'z'):
-    vx, vy, vz = vel.T
-
-    if tilt == 'z':
-        new_vel = np.vstack((vx, vz, -vy)).T
+def rotate(coord: np.ndarray, angular_momentum_hot_gas: np.ndarray, tilt: str = 'x'):
+    if tilt == 'x':
+        rotation_matrix = rotation_matrix_from_vector(np.array([1, 0, 0], dtype=np.float))
     elif tilt == 'y':
-        new_vel = np.vstack((vx, -vy, vz)).T
-    elif tilt == 'x':
-        new_vel = np.vstack((-vz, -vy, vx)).T
+        rotation_matrix = rotation_matrix_from_vector(np.array([0, 1, 0], dtype=np.float))
+    elif tilt == 'z':
+        rotation_matrix = rotation_matrix_from_vector(np.array([0, 0, 1], dtype=np.float))
     elif tilt == 'faceon':
-        face_on_rotation_matrix = rotation_matrix_from_vector(angular_momentum_hot_gas)
-        new_vel = np.matmul(face_on_rotation_matrix, vel.T).T
+        rotation_matrix = rotation_matrix_from_vector(angular_momentum_hot_gas)
     elif tilt == 'edgeon':
-        edge_on_rotation_matrix = rotation_matrix_from_vector(angular_momentum_hot_gas, axis='x')
-        new_vel = np.matmul(edge_on_rotation_matrix, vel.T).T
-    return new_vel
+        rotation_matrix = rotation_matrix_from_vector(angular_momentum_hot_gas, axis='y')
+
+    new_coord = np.matmul(rotation_matrix, coord.T).T
+    return new_coord
 
 
 def rksz_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
@@ -118,11 +98,11 @@ def rksz_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
     velocities_rest_frame[:, 2] -= mean_velocity_r500[2]
 
     # Rotate coordinates and velocities
-    coordinates_edgeon = rotate_coordinates(coordinates, angular_momentum_r500, tilt=alignment)
-    velocities_rest_frame_edgeon = rotate_velocities(velocities_rest_frame, angular_momentum_r500, tilt=alignment)
+    coordinates_edgeon = rotate(coordinates, angular_momentum_r500, tilt=alignment)
+    velocities_rest_frame_edgeon = rotate(velocities_rest_frame, angular_momentum_r500, tilt=alignment)
 
     # Rotate angular momentum vector for cross check
-    angular_momentum_r500_rotated = rotate_coordinates(
+    angular_momentum_r500_rotated = rotate(
         angular_momentum_r500 / np.linalg.norm(angular_momentum_r500), angular_momentum_r500, tilt=alignment
     ) * r500_crit / 2
 
@@ -157,6 +137,8 @@ def rksz_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
     h = np.asarray(h, dtype=np.float32)
     smoothed_map = scatter(x=x, y=y, m=m, h=h, res=resolution).T
 
+    print(compton_y.min(), compton_y.max(), smoothed_map.min(), smoothed_map.max())
+
     return smoothed_map
 
 
@@ -173,9 +155,17 @@ def dm_rotation_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
     m500_crit = data.read_catalogue_subfindtab('FOF/Group_M_Crit500')[1]
 
     # Generate smoothing lengths for dark matter
+    boxsize = unyt.unyt_array(
+        np.array([
+            coordinates[:, 0].max() - coordinates[:, 0].min() + 2.,
+            coordinates[:, 1].max() - coordinates[:, 1].min() + 2.,
+            coordinates[:, 2].max() - coordinates[:, 2].min() + 2.
+        ]),
+        unyt.Mpc
+    )
     smoothing_lengths = generate_smoothing_lengths(
         coordinates * unyt.Mpc,
-        data.read_header('BoxSize') * unyt.Mpc,
+        boxsize,
         kernel_gamma=1.8,
         neighbours=57,
         speedup_fac=2,
@@ -206,11 +196,11 @@ def dm_rotation_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
     velocities_rest_frame[:, 2] -= mean_velocity_r500[2]
 
     # Rotate coordinates and velocities
-    coordinates_edgeon = rotate_coordinates(coordinates, angular_momentum_r500, tilt=alignment)
-    velocities_rest_frame_edgeon = rotate_velocities(velocities_rest_frame, angular_momentum_r500, tilt=alignment)
+    coordinates_edgeon = rotate(coordinates, angular_momentum_r500, tilt=alignment)
+    velocities_rest_frame_edgeon = rotate(velocities_rest_frame, angular_momentum_r500, tilt=alignment)
 
     # Rotate angular momentum vector for cross check
-    angular_momentum_r500_rotated = rotate_coordinates(
+    angular_momentum_r500_rotated = rotate(
         angular_momentum_r500 / np.linalg.norm(angular_momentum_r500), angular_momentum_r500, tilt=alignment
     ) * r500_crit / 2
 
@@ -245,9 +235,13 @@ def dm_rotation_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
     return smoothed_map
 
 
-def dump_gas_to_hdf5_parallel():
+def dump_to_hdf5_parallel(particle_type: str = 'gas'):
+
+    # Switch the type of map between gas and DM
+    generate_map = rksz_map if particle_type == 'gas' else dm_rotation_map
+
     macsis = Macsis()
-    with h5py.File(f'{macsis.output_dir}/rksz_gas.hdf5', 'w', driver='mpio', comm=comm) as f:
+    with h5py.File(f'{macsis.output_dir}/rksz_{particle_type}.hdf5', 'w', driver='mpio', comm=comm) as f:
 
         # Retrieve all zoom handles in parallel (slow otherwise)
         data_handles = np.empty(0, dtype=np.object)
@@ -256,7 +250,6 @@ def dump_gas_to_hdf5_parallel():
                 print(f"Collecting metadata for process ({zoom_id:03d}/{macsis.num_zooms - 1})...")
                 data_handles = np.append(data_handles, macsis.get_zoom(zoom_id).get_redshift(-1))
 
-        # print(data_handle)
         zoom_handles = comm.allgather(data_handles)
         zoom_handles = np.concatenate(zoom_handles).ravel()
         if rank == 0:
@@ -268,61 +261,27 @@ def dump_gas_to_hdf5_parallel():
         for zoom_id, data_handle in enumerate(zoom_handles):
             if rank == 0:
                 print(f"Structuring ({zoom_id:03d}/{macsis.num_zooms - 1}): {data_handle.run_name}")
-            halo_group = f.create_group(f"{data_handle.run_name}")
-            halo_group.create_dataset(f"map_edgeon", (1024, 1024), dtype=np.float)
-            halo_group.create_dataset(f"map_faceon", (1024, 1024), dtype=np.float)
+            if data_handle.run_name not in f.keys():
+                halo_group = f.create_group(f"{data_handle.run_name}")
+            for projection in ['x', 'y', 'z', 'faceon', 'edgeon']:
+                if projection not in halo_group.keys():
+                    halo_group.create_dataset(f"map_{projection}", (1024, 1024), dtype=np.float)
 
         # Data assignment can be done through independent operations
         for zoom_id, data_handle in enumerate(zoom_handles):
             if zoom_id % num_processes == rank:
-                print(
-                    f"Rank {rank:03d} processing halo ({zoom_id:03d}/{macsis.num_zooms - 1}) | MACSIS name: {data_handle.run_name}")
-                rksz = rksz_map(data_handle, resolution=1024, alignment='edgeon')
-                f[f"{data_handle.run_name}/map_edgeon"][:] = rksz
-                rksz = rksz_map(data_handle, resolution=1024, alignment='faceon')
-                f[f"{data_handle.run_name}/map_faceon"][:] = rksz
+                print((
+                    f"Rank {rank:03d} processing halo ({zoom_id:03d}/{macsis.num_zooms - 1}) | "
+                    f"MACSIS name: {data_handle.run_name}"
+                ))
+                # for projection in ['x', 'y', 'z', 'faceon', 'edgeon']:
+                for projection in ['x']:
+                    if projection not in halo_group.keys():
+                        rksz = generate_map(data_handle, resolution=1024, alignment=projection)
+                        f[f"{data_handle.run_name}/map_{projection}"][:] = rksz
 
 
-def dump_dm_to_hdf5_parallel():
-    macsis = Macsis()
-    with h5py.File(f'{macsis.output_dir}/rksz_dm.hdf5', 'w', driver='mpio', comm=comm) as f:
-
-        # Retrieve all zoom handles in parallel (slow otherwise)
-        data_handles = np.empty(0, dtype=np.object)
-        for zoom_id in range(macsis.num_zooms):
-            if zoom_id % num_processes == rank:
-                print(f"Collecting metadata for process ({zoom_id:03d}/{macsis.num_zooms - 1})...")
-                data_handles = np.append(data_handles, macsis.get_zoom(zoom_id).get_redshift(-1))
-
-        # print(data_handle)
-        zoom_handles = comm.allgather(data_handles)
-        zoom_handles = np.concatenate(zoom_handles).ravel()
-        if rank == 0:
-            print([data_handle.run_name for data_handle in data_handles])
-
-        # Editing the structure of the file MUST be done collectively
-        if rank == 0:
-            print("Preparing structure of the file (collective operations)...")
-        for zoom_id, data_handle in enumerate(zoom_handles):
-            if rank == 0:
-                print(f"Structuring ({zoom_id:03d}/{macsis.num_zooms - 1}): {data_handle.run_name}")
-            halo_group = f.create_group(f"{data_handle.run_name}")
-            halo_group.create_dataset(f"map_edgeon", (1024, 1024), dtype=np.float)
-            halo_group.create_dataset(f"map_faceon", (1024, 1024), dtype=np.float)
-
-        # Data assignment can be done through independent operations
-        for zoom_id, data_handle in enumerate(zoom_handles):
-            if zoom_id % num_processes == rank:
-                print(
-                    f"Rank {rank:03d} processing halo ({zoom_id:03d}/{macsis.num_zooms - 1}) | MACSIS name: {data_handle.run_name}")
-                rksz = dm_rotation_map(data_handle, resolution=1024, alignment='edgeon')
-                f[f"{data_handle.run_name}/map_edgeon"][:] = rksz
-                rksz = dm_rotation_map(data_handle, resolution=1024, alignment='faceon')
-                f[f"{data_handle.run_name}/map_faceon"][:] = rksz
-
-
-# dump_gas_to_hdf5_parallel()
-# dump_dm_to_hdf5_parallel()
+dump_to_hdf5_parallel('gas')
 
 if rank == 0:
     with h5py.File(f'{Macsis().output_dir}/rksz_dm.hdf5', 'r') as f:
