@@ -50,9 +50,9 @@ for p in display_maps:
     max_list.append(np.abs(display_maps[p]).max())
 vlim = max(max_list)
 
-fig, axes = plt.subplots(nrows=1, ncols=len(display_maps))
+fig, axes = plt.subplots(1, 5)
 
-for ax, projection, smoothed_map in zip(axes, projections, display_maps.values()):
+for ax, projection, smoothed_map in zip(axes.flat, projections, display_maps.values()):
 
     im = ax.imshow(
         smoothed_map,
