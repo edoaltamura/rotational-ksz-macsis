@@ -163,8 +163,16 @@ def dm_rotation_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
         ]),
         unyt.Mpc
     )
+    high_res_coords_shifted = unyt.unyt_array(
+        np.array([
+            coordinates[:, 0] - coordinates[:, 0].min() + 1.,
+            coordinates[:, 1] - coordinates[:, 1].min() + 1.,
+            coordinates[:, 2] - coordinates[:, 2].min() + 1.
+        ]),
+        unyt.Mpc
+    )
     smoothing_lengths = generate_smoothing_lengths(
-        coordinates * unyt.Mpc,
+        high_res_coords_shifted,
         boxsize,
         kernel_gamma=1.8,
         neighbours=57,
