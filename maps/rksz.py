@@ -3,6 +3,7 @@ import sys
 import unyt
 import h5py
 import numpy as np
+import pandas as pd
 from mpi4py import MPI
 from swiftsimio.visualisation.projection import scatter_parallel as scatter
 from swiftsimio.visualisation.rotation import rotation_matrix_from_vector
@@ -251,7 +252,7 @@ def dump_to_hdf5_parallel(particle_type: str = 'gas', resolution: int = 1024):
 
         zoom_handles = comm.allgather(data_handles)
         zoom_handles = np.concatenate(zoom_handles).ravel()
-        zoom_handles = zoom_handles[~np.isnan(zoom_handles)]
+        zoom_handles = zoom_handles[~pd.isnull(zoom_handles)]
 
         if rank == 0:
             print([data_handle.run_name for data_handle in data_handles])
