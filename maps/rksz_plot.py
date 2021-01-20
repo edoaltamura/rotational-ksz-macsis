@@ -33,7 +33,7 @@ display_maps = dict()
 macsis = Macsis()
 
 print("Collecting data from file...")
-with h5py.File(f'{macsis.output_dir}/rksz_gas.hdf5', 'r') as f:
+with h5py.File(f'{macsis.output_dir}/rksz_dm.hdf5', 'r') as f:
     for projection in projections:
         for i, halo in enumerate(tqdm(f.keys(), desc=f"Merging map_{projection}")):
             dataset = f[f"{halo}/map_{projection}"][:]
@@ -42,7 +42,7 @@ with h5py.File(f'{macsis.output_dir}/rksz_gas.hdf5', 'r') as f:
             else:
                 display_maps[projection] += dataset
 
-# Get maximum limits
+# Get maximum limit and apply to all colormaps
 max_list = []
 for p in display_maps:
     max_list.append(np.abs(display_maps[p]).max())
