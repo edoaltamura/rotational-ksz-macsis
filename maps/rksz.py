@@ -207,9 +207,9 @@ def dm_rotation_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
 
     # Restrict map to 2*R500
     spatial_filter = np.where(
-        (np.abs(coordinates_edgeon[:, 0]) < r500_crit / 2) &
-        (np.abs(coordinates_edgeon[:, 1]) < r500_crit / 2) &
-        (np.abs(coordinates_edgeon[:, 2]) < r500_crit / 2)
+        (np.abs(coordinates_edgeon[:, 0]) < r500_crit) &
+        (np.abs(coordinates_edgeon[:, 1]) < r500_crit) &
+        (np.abs(coordinates_edgeon[:, 2]) < r500_crit)
     )[0]
 
     coordinates_edgeon = coordinates_edgeon[spatial_filter]
@@ -234,7 +234,7 @@ def dm_rotation_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
     return smoothed_map
 
 
-def dump_to_hdf5_parallel(particle_type: str = 'gas'):
+def dump_to_hdf5_parallel(particle_type: str = 'gas', resolution: int = 1024):
 
     # Switch the type of map between gas and DM
     generate_map = rksz_map if particle_type == 'gas' else dm_rotation_map
@@ -264,7 +264,7 @@ def dump_to_hdf5_parallel(particle_type: str = 'gas'):
                 halo_group = f.create_group(f"{data_handle.run_name}")
             for projection in ['x', 'y', 'z', 'faceon', 'edgeon']:
                 if projection not in halo_group.keys():
-                    halo_group.create_dataset(f"map_{projection}", (1024, 1024), dtype=np.float)
+                    halo_group.create_dataset(f"map_{projection}", (resolution, resolution), dtype=np.float)
 
         # Data assignment can be done through independent operations
         for zoom_id, data_handle in enumerate(zoom_handles):
@@ -273,14 +273,15 @@ def dump_to_hdf5_parallel(particle_type: str = 'gas'):
                     f"Rank {rank:03d} processing halo ({zoom_id:03d}/{macsis.num_zooms - 1}) | "
                     f"MACSIS name: {data_handle.run_name}"
                 ))
-                # for projection in ['x', 'y', 'z', 'faceon', 'edgeon']:
-                for projection in ['x']:
-                    if projection not in halo_group.keys():
-                        rksz = generate_map(data_handle, resolution=1024, alignment=projection)
+                for projection in ['x', 'y', 'z', 'faceon', 'edgeon']:
+                    # Check that the arrays is not all zeros
+                    if not np.any(f[f"{data_handle.run_name}/map_{projection}"][:]):
+                        rksz = generate_map(data_handle, resolution=resolution, alignment=projection)
                         f[f"{data_handle.run_name}/map_{projection}"][:] = rksz
 
 
 if __name__ == "__main__":
 
-    dump_to_hdf5_parallel('gas')
+    dump_to_hdf5_parallel('gas', resolution=1024)
+    dump_to_hdf5_parallel('dm', resolution=1024)
 
