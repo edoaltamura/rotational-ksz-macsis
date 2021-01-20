@@ -52,9 +52,9 @@ vlim = max(max_list)
 
 fig, axes = plt.subplots(nrows=1, ncols=len(display_maps))
 
-for projection, smoothed_map in zip(projections, display_maps.values()):
+for ax, projection, smoothed_map in zip(axes, projections, display_maps.values()):
 
-    im = axes.imshow(
+    im = ax.imshow(
         smoothed_map,
         norm=SymLogNorm(linthresh=0.01, linscale=1, vmin=-vlim, vmax=vlim),
         cmap="PRGn",
@@ -62,10 +62,10 @@ for projection, smoothed_map in zip(projections, display_maps.values()):
         extent=(-1, 1, -1, 1),
     )
     # plt.plot([0, angular_momentum_r500_rotated[0]], [0, angular_momentum_r500_rotated[1]], marker='o')
-    axes.set_axis_off()
-    axes.set_title(f"Projection {projection}")
+    ax.set_axis_off()
+    ax.set_title(f"Projection {projection}")
 
-divider = make_axes_locatable(axes)
+divider = make_axes_locatable(ax)
 cax = divider.append_axes("right", size="5%", pad=0.05)
 plt.colorbar(im, cax=cax, label=r'$\sum y_{ksz}$')
 # fig.tight_layout()
