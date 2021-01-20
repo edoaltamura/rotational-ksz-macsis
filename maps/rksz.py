@@ -281,12 +281,12 @@ def dump_to_hdf5_parallel(particle_type: str = 'gas'):
                         f[f"{data_handle.run_name}/map_{projection}"][:] = rksz
 
 
-dump_to_hdf5_parallel('gas')
+# dump_to_hdf5_parallel('gas')
 
 if rank == 0:
-    with h5py.File(f'{Macsis().output_dir}/rksz_dm.hdf5', 'r') as f:
+    with h5py.File(f'{Macsis().output_dir}/rksz_gas.hdf5', 'r') as f:
         for i, halo in enumerate(f.keys()):
-            dataset = f[f"{halo}/map_edgeon"][:]
+            dataset = f[f"{halo}/map_x"][:]
             print((
                 f"Merging map from {halo} | "
                 f"shape: {dataset.shape} | "
