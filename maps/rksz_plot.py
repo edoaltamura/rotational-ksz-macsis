@@ -30,8 +30,10 @@ except:
 Tcmb0 = 2.7255
 projections = ['x', 'y', 'z', 'faceon', 'edgeon']
 display_maps = dict()
+macsis = Macsis()
+
 print("Collecting data from file...")
-with h5py.File(f'{Macsis().output_dir}/rksz_gas.hdf5', 'r') as f:
+with h5py.File(f'{macsis.output_dir}/rksz_gas.hdf5', 'r') as f:
     for projection in projections:
         for i, halo in enumerate(tqdm(f.keys(), desc=f"Merging map_{projection}")):
             dataset = f[f"{halo}/map_{projection}"][:]
@@ -66,13 +68,13 @@ for ax, projection, smoothed_map in zip(axes.flat, projections, display_maps.val
     ax.text(0, 1, r'$R_{500, crit}$',
             horizontalalignment='center',
             verticalalignment='bottom',
-            transform=ax.transAxes,
-            color='k'
-            )
+            # transform=ax.transAxes,
+            color='k')
 
 divider = make_axes_locatable(ax)
 cax = divider.append_axes("right", size="5%", pad=0.05)
 plt.colorbar(im, cax=cax, label=r'$\sum y_{ksz}$')
 fig.tight_layout()
-plt.show()
+plt.savefig(f'{macsis.output_dir}/rksz_gas.png', dpi=350)
 plt.close()
+os.system(f'eog {macsis.output_dir}/rksz_gas.png')
