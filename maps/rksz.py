@@ -9,6 +9,7 @@ from swiftsimio.visualisation.rotation import rotation_matrix_from_vector
 from swiftsimio.visualisation.smoothing_length_generation import generate_smoothing_lengths
 from matplotlib import pyplot as plt
 from matplotlib.colors import LogNorm, SymLogNorm
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 # Make the register backend visible to the script
 sys.path.append(
@@ -308,12 +309,15 @@ if rank == 0:
         norm=SymLogNorm(linthresh=0.01, linscale=1, vmin=-vlim, vmax=vlim),
         cmap="PRGn",
         origin="lower",
-        extent=(-1, 1, -1, 1,)
+        extent=(-1, 1, -1, 1),
     )
     # plt.plot([0, angular_momentum_r500_rotated[0]], [0, angular_momentum_r500_rotated[1]], marker='o')
     plt.axis('off')
-    cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
-    fig.colorbar(im, cax=cbar_ax, label=r'$\sum y_{ksz}$')
+
+    divider = make_axes_locatable(axes)
+    cax = divider.append_axes("right", size="5%", pad=0.05)
+    plt.colorbar(im, cax=cax, label=r'$\sum y_{ksz}$')
+
     axes.set_title(f"Projection {projection}")
     plt.show()
     plt.close()
