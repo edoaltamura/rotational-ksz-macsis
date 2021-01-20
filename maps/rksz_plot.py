@@ -17,7 +17,6 @@ sys.path.append(
     )
 )
 
-
 from read import MacsisDataset
 from register import Macsis
 
@@ -26,7 +25,6 @@ projections = ['x', 'y', 'z', 'faceon', 'edgeon']
 fig, ax = plt.subplots(nrows=1, ncols=5)
 
 with h5py.File(f'{Macsis().output_dir}/rksz_gas.hdf5', 'r') as f:
-
     for projection, axes in zip(projections, ax.flat):
         for i, halo in enumerate(f.keys()):
             dataset = f[f"{halo}/map_{projection}"][:]
@@ -43,7 +41,6 @@ with h5py.File(f'{Macsis().output_dir}/rksz_gas.hdf5', 'r') as f:
         # smoothed_map = np.ma.masked_where(np.log10(np.abs(smoothed_map)) < -20, smoothed_map)
         vlim = np.abs(smoothed_map).max()
 
-
         im = axes.imshow(
             smoothed_map,
             norm=SymLogNorm(linthresh=0.01, linscale=1, vmin=-vlim, vmax=vlim),
@@ -51,6 +48,7 @@ with h5py.File(f'{Macsis().output_dir}/rksz_gas.hdf5', 'r') as f:
             origin="lower",
             extent=(-1, 1, -1, 1),
         )
+        del smoothed_map
         # plt.plot([0, angular_momentum_r500_rotated[0]], [0, angular_momentum_r500_rotated[1]], marker='o')
         axes.set_axis_off()
         divider = make_axes_locatable(axes)
