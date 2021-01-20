@@ -251,6 +251,8 @@ def dump_to_hdf5_parallel(particle_type: str = 'gas', resolution: int = 1024):
 
         zoom_handles = comm.allgather(data_handles)
         zoom_handles = np.concatenate(zoom_handles).ravel()
+        zoom_handles = zoom_handles[~np.isnan(zoom_handles)]
+
         if rank == 0:
             print([data_handle.run_name for data_handle in data_handles])
 

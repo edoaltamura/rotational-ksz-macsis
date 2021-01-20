@@ -3,6 +3,7 @@ import sys
 import unyt
 import h5py
 import numpy as np
+from tqdm import tqdm
 from matplotlib import pyplot as plt
 from matplotlib.colors import LogNorm, SymLogNorm
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -31,7 +32,7 @@ display_maps = dict()
 
 with h5py.File(f'{Macsis().output_dir}/rksz_gas.hdf5', 'r') as f:
     for projection in projections:
-        for i, halo in enumerate(f.keys()):
+        for i, halo in tqdm(enumerate(f.keys()), desc=f"Merging map_{projection}"):
             dataset = f[f"{halo}/map_{projection}"][:]
             print((
                 f"Merging map_{projection} from {halo} | "
@@ -45,7 +46,6 @@ with h5py.File(f'{Macsis().output_dir}/rksz_gas.hdf5', 'r') as f:
 
 # smoothed_map = np.ma.masked_where(np.log10(np.abs(smoothed_map)) < -20, smoothed_map)
 # Get maximum limits
-print(display_maps)
 max_list = []
 for p in display_maps:
     max_list.append(np.abs(display_maps[p]).max())
@@ -69,6 +69,6 @@ for ax, projection, smoothed_map in zip(axes.flat, projections, display_maps.val
 divider = make_axes_locatable(ax)
 cax = divider.append_axes("right", size="5%", pad=0.05)
 plt.colorbar(im, cax=cax, label=r'$\sum y_{ksz}$')
-# fig.tight_layout()
+fig.tight_layout()
 plt.show()
 plt.close()
