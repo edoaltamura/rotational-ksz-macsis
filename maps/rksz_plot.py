@@ -47,6 +47,7 @@ max_list = []
 for p in display_maps:
     max_list.append(np.abs(display_maps[p]).max())
 vlim = max(max_list)
+print(vlim / 390)
 
 print("Composing plot figure...")
 fig, axes = plt.subplots(1, 5, figsize=(15, 3), sharex=True, sharey=True,
