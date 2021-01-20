@@ -50,7 +50,7 @@ vlim = max(max_list)
 
 print("Composing plot figure...")
 fig, axes = plt.subplots(1, 5, figsize=(15, 3), sharex=True, sharey=True,
-                         gridspec_kw={'wspace': 0, 'hspace': 0})
+                         gridspec_kw={'wspace': 0.05, 'hspace': 0.05})
 
 for ax, projection, smoothed_map in zip(axes.flat, projections, display_maps.values()):
     im = ax.imshow(
@@ -70,10 +70,10 @@ for ax, projection, smoothed_map in zip(axes.flat, projections, display_maps.val
             # transform=ax.transAxes,
             color='k')
 
-fig.suptitle('All clusters')
-divider = make_axes_locatable(ax)
-cax = divider.append_axes("right", size="5%", pad=0.05)
-plt.colorbar(im, cax=cax, label=r'$\sum y_{ksz}$')
+plt.title('All clusters')
+# divider = make_axes_locatable(ax)
+# cax = divider.append_axes("right", size="5%", pad=0.05)
+plt.colorbar(im, label=r'$\sum y_{ksz}$')
 fig.tight_layout()
 plt.savefig(f'{macsis.output_dir}/rksz_gas.png', dpi=350)
 plt.show()
