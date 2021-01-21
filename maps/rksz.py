@@ -277,6 +277,7 @@ def dump_to_hdf5_parallel(particle_type: str = 'gas', resolution: int = 1024):
                         f[f"{data_handle.run_name}/map_{projection}"][:] = rksz
 
 
+
 if __name__ == "__main__":
 
     dump_to_hdf5_parallel('gas', resolution=1024)
