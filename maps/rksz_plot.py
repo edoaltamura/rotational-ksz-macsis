@@ -47,7 +47,7 @@ max_list = []
 for p in display_maps:
     max_list.append(np.abs(display_maps[p]).max())
 vlim = max(max_list)
-print(vlim / 390)
+print(vlim)
 
 print("Composing plot figure...")
 fig, axes = plt.subplots(1, 5, figsize=(15, 3), sharex=True, sharey=True,
@@ -55,8 +55,8 @@ fig, axes = plt.subplots(1, 5, figsize=(15, 3), sharex=True, sharey=True,
 
 for ax, projection, smoothed_map in zip(axes.flat, projections, display_maps.values()):
     im = ax.imshow(
-        smoothed_map / vlim,
-        norm=SymLogNorm(linthresh=0.01, linscale=1, vmin=-1, vmax=1),
+        smoothed_map,
+        norm=SymLogNorm(vmin=-vlim, vmax=vlim),
         cmap="PRGn",
         origin="lower",
         extent=(-2, 2, -2, 2),
