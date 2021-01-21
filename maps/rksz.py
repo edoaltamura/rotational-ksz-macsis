@@ -139,7 +139,7 @@ def rksz_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
 
     print(f"Smoothing lenghts: Mean {np.mean(smoothing_lengths)}, Std {np.std(smoothing_lengths)}")
 
-    return smoothed_map * 1.e6
+    return smoothed_map
 
 
 def dm_rotation_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
