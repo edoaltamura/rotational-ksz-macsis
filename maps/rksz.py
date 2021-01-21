@@ -137,9 +137,9 @@ def rksz_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
     h = np.asarray(h, dtype=np.float32)
     smoothed_map = scatter(x=x, y=y, m=m, h=h, res=resolution).T
 
-    print(compton_y.min(), compton_y.max(), smoothed_map.min(), smoothed_map.max())
+    print(f"Smoothing lenghts: Mean {np.mean(smoothing_lengths)}, Std {np.std(smoothing_lengths)}")
 
-    return smoothed_map
+    return smoothed_map * 1.e6
 
 
 def dm_rotation_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
@@ -224,7 +224,9 @@ def dm_rotation_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
     h = np.asarray(h, dtype=np.float32)
     smoothed_map = scatter(x=x, y=y, m=m, h=h, res=resolution).T
 
-    return smoothed_map
+    print(f"Smoothing lenghts: Mean {np.mean(smoothing_lengths)}, Std {np.std(smoothing_lengths)}")
+
+    return smoothed_map / 1.e9
 
 
 def dump_to_hdf5_parallel(particle_type: str = 'gas', resolution: int = 1024):
@@ -259,7 +261,7 @@ def dump_to_hdf5_parallel(particle_type: str = 'gas', resolution: int = 1024):
                 halo_group = f.create_group(f"{data_handle.run_name}")
             for projection in ['x', 'y', 'z', 'faceon', 'edgeon']:
                 if projection not in halo_group.keys():
-                    halo_group.create_dataset(f"map_{projection}", (resolution, resolution), dtype=np.float)
+                    halo_group.create_dataset(f"map_{projection}", (resolution, resolution), dtype=np.float64)
 
         # Data assignment can be done through independent operations
         for zoom_id, data_handle in enumerate(zoom_handles):
@@ -277,6 +279,6 @@ def dump_to_hdf5_parallel(particle_type: str = 'gas', resolution: int = 1024):
 
 if __name__ == "__main__":
 
-    # dump_to_hdf5_parallel('gas', resolution=1024)
-    dump_to_hdf5_parallel('dm', resolution=1024)
+    dump_to_hdf5_parallel('gas', resolution=1024)
+    # dump_to_hdf5_parallel('dm', resolution=1024)
 
