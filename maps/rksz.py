@@ -5,10 +5,11 @@ import h5py
 import numpy as np
 import pandas as pd
 from mpi4py import MPI
-from swiftsimio.visualisation.projection import scatter_parallel as scatter
+from swiftsimio.visualisation.projection_backends import backends_parallel
 from swiftsimio.visualisation.rotation import rotation_matrix_from_vector
 from swiftsimio.visualisation.smoothing_length_generation import generate_smoothing_lengths
 
+scatter = backends_parallel["subsampled"]
 
 # Make the register backend visible to the script
 sys.path.append(
@@ -137,7 +138,7 @@ def rksz_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
     h = np.asarray(h, dtype=np.float32)
     smoothed_map = scatter(x=x, y=y, m=m, h=h, res=resolution).T
 
-    print(f"Smoothing lenghts: Mean {np.mean(smoothing_lengths)}, Std {np.std(smoothing_lengths)}")
+    # print(f"Smoothing lenghts: Mean {np.mean(smoothing_lengths)}, Std {np.std(smoothing_lengths)}")
 
     return smoothed_map
 
@@ -158,9 +159,9 @@ def dm_rotation_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
     smoothing_lengths = generate_smoothing_lengths(
         coordinates * unyt.Mpc,
         data.read_header('BoxSize') * unyt.Mpc,
-        kernel_gamma=1.8,
+        kernel_gamma=1.897367, # Taken from Dehnen & Aly 2012
         neighbours=57,
-        speedup_fac=2,
+        speedup_fac=1,
         dimension=3,
     ).value
 
@@ -226,7 +227,7 @@ def dm_rotation_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
 
     print(f"Smoothing lenghts: Mean {np.mean(smoothing_lengths)}, Std {np.std(smoothing_lengths)}")
 
-    return smoothed_map / 1.e9
+    return smoothed_map / 1.e10
 
 
 def dump_to_hdf5_parallel(particle_type: str = 'gas', resolution: int = 1024):
@@ -280,6 +281,6 @@ def dump_to_hdf5_parallel(particle_type: str = 'gas', resolution: int = 1024):
 
 if __name__ == "__main__":
 
-    dump_to_hdf5_parallel('gas', resolution=1024)
-    # dump_to_hdf5_parallel('dm', resolution=1024)
+    # dump_to_hdf5_parallel('gas', resolution=1024)
+    dump_to_hdf5_parallel('dm', resolution=1024)
 
