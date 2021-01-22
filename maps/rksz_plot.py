@@ -36,7 +36,7 @@ print("Collecting data from file...")
 with h5py.File(f'{macsis.output_dir}/rksz_dm.hdf5', 'r') as f:
     for projection in projections:
         for i, halo in enumerate(tqdm(f.keys(), desc=f"Merging map_{projection}")):
-            dataset = f[f"{halo}/map_{projection}"][:]
+            dataset = f[f"{halo}/map_{projection}"][:] / 1e6
             if i == 0:
                 display_maps[projection] = dataset
             else:
@@ -55,7 +55,7 @@ fig, axes = plt.subplots(1, 5, figsize=(15, 3), sharex=True, sharey=True,
 
 for ax, projection, smoothed_map in zip(axes.flat, projections, display_maps.values()):
     im = ax.imshow(
-        smoothed_map / 1e6,
+        smoothed_map,
         norm=SymLogNorm(linthresh=1e-3, vmin=-vlim, vmax=vlim),
         cmap="PRGn",
         origin="lower",
