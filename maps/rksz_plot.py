@@ -56,7 +56,7 @@ fig, axes = plt.subplots(1, 5, figsize=(15, 3), sharex=True, sharey=True,
 for ax, projection, smoothed_map in zip(axes.flat, projections, display_maps.values()):
     im = ax.imshow(
         smoothed_map,
-        norm=SymLogNorm(linthresh=1e-3, vmin=-vlim, vmax=vlim),
+        norm=SymLogNorm(linthresh=1e-1, vmin=-vlim, vmax=vlim),
         cmap="PRGn",
         origin="lower",
         extent=(-2, 2, -2, 2),
