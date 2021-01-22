@@ -36,7 +36,7 @@ print("Collecting data from file...")
 with h5py.File(f'{macsis.output_dir}/rksz_dm.hdf5', 'r') as f:
     for projection in projections:
         for i, halo in enumerate(tqdm(f.keys(), desc=f"Merging map_{projection}")):
-            dataset = f[f"{halo}/map_{projection}"][:] / 1e6
+            dataset = f[f"{halo}/map_{projection}"][:]
             if i == 0:
                 display_maps[projection] = dataset
             else:
