@@ -116,7 +116,7 @@ def dump_to_hdf5_parallel():
         zoom_handles = comm.allgather(data_handles)
         zoom_handles = np.concatenate(zoom_handles).ravel()
         zoom_handles = zoom_handles[~pd.isnull(zoom_handles)]
-        sort_keys = np.argsort(np.array([int(z.run_name[:-4]) for z in zoom_handles]))
+        sort_keys = np.argsort(np.array([int(z.run_name[-4:]) for z in zoom_handles]))
         zoom_handles = sort_keys[sort_keys]
 
         if rank == 0:
