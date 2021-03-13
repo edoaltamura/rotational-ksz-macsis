@@ -1,5 +1,4 @@
 import h5py
-import inspect
 
 from register import Redshift
 

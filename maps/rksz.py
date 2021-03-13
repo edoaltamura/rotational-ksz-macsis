@@ -159,7 +159,7 @@ def dm_rotation_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
     smoothing_lengths = generate_smoothing_lengths(
         coordinates * unyt.Mpc,
         data.read_header('BoxSize') * unyt.Mpc,
-        kernel_gamma=1.897367, # Taken from Dehnen & Aly 2012
+        kernel_gamma=1.897367,  # Taken from Dehnen & Aly 2012
         neighbours=57,
         speedup_fac=1,
         dimension=3,
@@ -231,7 +231,6 @@ def dm_rotation_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
 
 
 def dump_to_hdf5_parallel(particle_type: str = 'gas', resolution: int = 1024):
-
     # Switch the type of map between gas and DM
     generate_map = rksz_map if particle_type == 'gas' else dm_rotation_map
 
@@ -278,9 +277,6 @@ def dump_to_hdf5_parallel(particle_type: str = 'gas', resolution: int = 1024):
                         f[f"{data_handle.run_name}/map_{projection}"][:] = rksz
 
 
-
 if __name__ == "__main__":
-
     # dump_to_hdf5_parallel('gas', resolution=1024)
     dump_to_hdf5_parallel('dm', resolution=1024)
-

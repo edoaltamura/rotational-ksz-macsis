@@ -49,11 +49,13 @@ def rotate(coord: np.ndarray, angular_momentum_hot_gas: np.ndarray, tilt: str = 
 
 
 def angular_momentum(halo, particle_type: str = 'gas'):
-    # Switch the type of map between gas and DM
+    # Switch the type of angular momentum analysis
     if particle_type == 'gas':
         pt_number = '0'
     elif particle_type == 'dm':
         pt_number = '1'
+    elif particle_type == 'stars':
+        pt_number = '4'
 
     data = MacsisDataset(halo)
 
@@ -130,6 +132,12 @@ def dump_to_hdf5_parallel():
         angular_momentum_hotgas_r500 = f.create_dataset(
             "angular_momentum_hotgas_r500", (macsis.num_zooms,), dtype=np.float
         )
+        angular_momentum_dark_matter_r500 = f.create_dataset(
+            "angular_momentum_dark_matter_r500", (macsis.num_zooms,), dtype=np.float
+        )
+        angular_momentum_stars_r500 = f.create_dataset(
+            "angular_momentum_stars_r500", (macsis.num_zooms,), dtype=np.float
+        )
 
         # Data assignment can be done through independent operations
         for zoom_id, data_handle in enumerate(zoom_handles):
@@ -143,6 +151,8 @@ def dump_to_hdf5_parallel():
                 m_500crit[zoom_id] = data_handle.read_catalogue_subfindtab('FOF/Group_M_Crit500')[1]
                 r_500crit[zoom_id] = data_handle.read_catalogue_subfindtab('FOF/Group_R_Crit500')[1]
                 angular_momentum_hotgas_r500[zoom_id] = angular_momentum(data_handle, particle_type='gas')
+                angular_momentum_dark_matter_r500[zoom_id] = angular_momentum(data_handle, particle_type='dm')
+                angular_momentum_stars_r500[zoom_id] = angular_momentum(data_handle, particle_type='stars')
 
 
 if __name__ == "__main__":
