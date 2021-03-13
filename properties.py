@@ -126,7 +126,7 @@ def dump_to_hdf5_parallel():
         if rank == 0:
             print("Preparing structure of the file (collective operations)...")
 
-        names = f.create_dataset("names", (macsis.num_zooms,), dtype=np.str)
+        names = f.create_dataset("names", (macsis.num_zooms,), dtype=np.int)
         m_500crit = f.create_dataset("m_500crit", (macsis.num_zooms,), dtype=np.float)
         r_500crit = f.create_dataset("r_500crit", (macsis.num_zooms,), dtype=np.float)
         angular_momentum_hotgas_r500 = f.create_dataset(
@@ -147,7 +147,7 @@ def dump_to_hdf5_parallel():
                     f"MACSIS name: {data_handle.run_name}"
                 ))
 
-                names[zoom_id] = data_handle.run_name
+                names[zoom_id] = int(data_handle.run_name[-4:])
                 m_500crit[zoom_id] = data_handle.read_catalogue_subfindtab('FOF/Group_M_Crit500')[1]
                 r_500crit[zoom_id] = data_handle.read_catalogue_subfindtab('FOF/Group_R_Crit500')[1]
                 angular_momentum_hotgas_r500[zoom_id] = angular_momentum(data_handle, particle_type='gas')
