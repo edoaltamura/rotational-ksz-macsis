@@ -47,6 +47,118 @@ def rotate(coord: np.ndarray, angular_momentum_hot_gas: np.ndarray, tilt: str = 
     return new_coord
 
 
+def mean_velocity(halo, particle_type: str = 'gas'):
+    # Switch the type of angular momentum analysis
+    if particle_type == 'gas':
+        pt_number = '0'
+    elif particle_type == 'dm':
+        pt_number = '1'
+    elif particle_type == 'stars':
+        pt_number = '4'
+
+    data = MacsisDataset(halo)
+
+    # Read data
+    coordinates = data.read_snapshot(f'PartType{pt_number}/Coordinates')
+    if particle_type == 'dm':
+        dm_particle_mass = data.read_header('MassTable')[1]
+        masses = np.ones(len(coordinates), dtype=np.float) * dm_particle_mass
+    else:
+        masses = data.read_snapshot(f'PartType{pt_number}/Mass')
+    velocities = data.read_snapshot(f'PartType{pt_number}/Velocity')
+
+    # Remember that the largest FOF has index 1
+    centre_of_potential = data.read_catalogue_subfindtab('FOF/GroupCentreOfPotential')[1]
+    r500_crit = data.read_catalogue_subfindtab('FOF/Group_R_Crit500')[1]
+
+    # Select ionised hot gas
+    if particle_type == 'gas':
+        temperatures = data.read_snapshot(f'PartType{pt_number}/Temperature')
+        temperature_cut = np.where(temperatures > 1.e5)[0]
+        coordinates = coordinates[temperature_cut]
+        masses = masses[temperature_cut]
+        velocities = velocities[temperature_cut]
+
+    # Rescale coordinates to CoP
+    coordinates[:, 0] -= centre_of_potential[0]
+    coordinates[:, 1] -= centre_of_potential[1]
+    coordinates[:, 2] -= centre_of_potential[2]
+
+    # Compute mean velocity inside R500
+    radial_dist = np.sqrt(
+        coordinates[:, 0] ** 2 +
+        coordinates[:, 1] ** 2 +
+        coordinates[:, 2] ** 2
+    )
+    r500_mask = np.where(radial_dist < r500_crit)[0]
+
+    mean_velocity_r500 = np.sum(velocities[r500_mask] * masses[r500_mask, None], axis=0) / np.sum(masses[r500_mask])
+
+    return mean_velocity_r500
+
+
+def velocity_dispersion(halo, particle_type: str = 'gas'):
+    # Switch the type of angular momentum analysis
+    if particle_type == 'gas':
+        pt_number = '0'
+    elif particle_type == 'dm':
+        pt_number = '1'
+    elif particle_type == 'stars':
+        pt_number = '4'
+
+    data = MacsisDataset(halo)
+
+    # Read data
+    coordinates = data.read_snapshot(f'PartType{pt_number}/Coordinates')
+    if particle_type == 'dm':
+        dm_particle_mass = data.read_header('MassTable')[1]
+        masses = np.ones(len(coordinates), dtype=np.float) * dm_particle_mass
+    else:
+        masses = data.read_snapshot(f'PartType{pt_number}/Mass')
+    velocities = data.read_snapshot(f'PartType{pt_number}/Velocity')
+
+    # Remember that the largest FOF has index 1
+    centre_of_potential = data.read_catalogue_subfindtab('FOF/GroupCentreOfPotential')[1]
+    r500_crit = data.read_catalogue_subfindtab('FOF/Group_R_Crit500')[1]
+
+    # Select ionised hot gas
+    if particle_type == 'gas':
+        temperatures = data.read_snapshot(f'PartType{pt_number}/Temperature')
+        temperature_cut = np.where(temperatures > 1.e5)[0]
+        coordinates = coordinates[temperature_cut]
+        masses = masses[temperature_cut]
+        velocities = velocities[temperature_cut]
+
+    # Rescale coordinates to CoP
+    coordinates[:, 0] -= centre_of_potential[0]
+    coordinates[:, 1] -= centre_of_potential[1]
+    coordinates[:, 2] -= centre_of_potential[2]
+
+    # Compute mean velocity inside R500
+    radial_dist = np.sqrt(
+        coordinates[:, 0] ** 2 +
+        coordinates[:, 1] ** 2 +
+        coordinates[:, 2] ** 2
+    )
+    r500_mask = np.where(radial_dist < r500_crit)[0]
+
+    mean_velocity_r500 = np.sum(velocities[r500_mask] * masses[r500_mask, None], axis=0) / np.sum(masses[r500_mask])
+
+    velocities_rest_frame = velocities.copy()
+    velocities_rest_frame[:, 0] -= mean_velocity_r500[0]
+    velocities_rest_frame[:, 1] -= mean_velocity_r500[1]
+    velocities_rest_frame[:, 2] -= mean_velocity_r500[2]
+
+    velocity_dispersion_r500 = np.sqrt(
+        np.sum(
+            np.power(velocities_rest_frame * masses[:, None], 2.),
+            axis=0
+        ) / np.sum(masses[r500_mask])
+    )
+
+    return velocity_dispersion_r500
+
+
 def angular_momentum(halo, particle_type: str = 'gas'):
     # Switch the type of angular momentum analysis
     if particle_type == 'gas':
@@ -129,9 +241,10 @@ def dump_to_hdf5_parallel():
         if rank == 0:
             print("Preparing structure of the file (collective operations)...")
 
-        names = f.create_dataset("names", (macsis.num_zooms,), dtype=np.int)
+        names = f.create_dataset("names", (macsis.num_zooms,), dtype=np.str)
         m_500crit = f.create_dataset("m_500crit", (macsis.num_zooms,), dtype=np.float)
         r_500crit = f.create_dataset("r_500crit", (macsis.num_zooms,), dtype=np.float)
+
         angular_momentum_hotgas_r500 = f.create_dataset(
             "angular_momentum_hotgas_r500", (macsis.num_zooms, 3), dtype=np.float
         )
@@ -142,6 +255,26 @@ def dump_to_hdf5_parallel():
             "angular_momentum_stars_r500", (macsis.num_zooms, 3), dtype=np.float
         )
 
+        mean_velocity_hotgas_r500 = f.create_dataset(
+            "mean_velocity_hotgas_r500", (macsis.num_zooms, 3), dtype=np.float
+        )
+        mean_velocity_dark_matter_r500 = f.create_dataset(
+            "mean_velocity_dark_matter_r500", (macsis.num_zooms, 3), dtype=np.float
+        )
+        mean_velocity_stars_r500 = f.create_dataset(
+            "mean_velocity_stars_r500", (macsis.num_zooms, 3), dtype=np.float
+        )
+
+        velocity_dispersion_hotgas_r500 = f.create_dataset(
+            "velocity_dispersion_hotgas_r500", (macsis.num_zooms, 3), dtype=np.float
+        )
+        velocity_dispersion_dark_matter_r500 = f.create_dataset(
+            "velocity_dispersion_dark_matter_r500", (macsis.num_zooms, 3), dtype=np.float
+        )
+        velocity_dispersion_stars_r500 = f.create_dataset(
+            "velocity_dispersion_stars_r500", (macsis.num_zooms, 3), dtype=np.float
+        )
+
         # Data assignment can be done through independent operations
         for zoom_id, data_handle in enumerate(zoom_handles):
             if zoom_id % num_processes == rank:
@@ -150,12 +283,21 @@ def dump_to_hdf5_parallel():
                     f"MACSIS name: {data_handle.run_name}"
                 ))
 
-                names[zoom_id] = int(data_handle.run_name[-4:])
+                names[zoom_id] = data_handle.run_name
                 m_500crit[zoom_id] = MacsisDataset(data_handle).read_catalogue_subfindtab('FOF/Group_M_Crit500')[1]
                 r_500crit[zoom_id] = MacsisDataset(data_handle).read_catalogue_subfindtab('FOF/Group_R_Crit500')[1]
+
                 angular_momentum_hotgas_r500[zoom_id] = angular_momentum(data_handle, particle_type='gas')
                 angular_momentum_dark_matter_r500[zoom_id] = angular_momentum(data_handle, particle_type='dm')
                 angular_momentum_stars_r500[zoom_id] = angular_momentum(data_handle, particle_type='stars')
+
+                mean_velocity_hotgas_r500[zoom_id] = mean_velocity(data_handle, particle_type='gas')
+                mean_velocity_dark_matter_r500[zoom_id] = mean_velocity(data_handle, particle_type='dm')
+                mean_velocity_stars_r500[zoom_id] = mean_velocity(data_handle, particle_type='stars')
+
+                velocity_dispersion_hotgas_r500[zoom_id] = velocity_dispersion(data_handle, particle_type='gas')
+                velocity_dispersion_dark_matter_r500[zoom_id] = velocity_dispersion(data_handle, particle_type='dm')
+                velocity_dispersion_stars_r500[zoom_id] = velocity_dispersion(data_handle, particle_type='stars')
 
 
 if __name__ == "__main__":
