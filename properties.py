@@ -144,7 +144,7 @@ def dump_to_hdf5_parallel():
             if zoom_id % num_processes == rank:
                 print((
                     f"Rank {rank:03d} processing halo ({zoom_id:03d}/{macsis.num_zooms - 1}) | "
-                    f"MACSIS name: {data_handle.run_name}"
+                    f"MACSIS name: {data_handle}"
                 ))
 
                 names[zoom_id] = int(data_handle.run_name[-4:])
