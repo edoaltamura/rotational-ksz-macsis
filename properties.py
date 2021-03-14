@@ -9,7 +9,6 @@ from swiftsimio.visualisation.projection import scatter_parallel as scatter
 from swiftsimio.visualisation.rotation import rotation_matrix_from_vector
 from swiftsimio.visualisation.smoothing_length_generation import generate_smoothing_lengths
 
-
 # Make the register backend visible to the script
 sys.path.append(
     os.path.abspath(
@@ -148,14 +147,12 @@ def dump_to_hdf5_parallel():
                 ))
 
                 names[zoom_id] = int(data_handle.run_name[-4:])
-                m_500crit[zoom_id] = data_handle.read_catalogue_subfindtab('FOF/Group_M_Crit500')[1]
-                r_500crit[zoom_id] = data_handle.read_catalogue_subfindtab('FOF/Group_R_Crit500')[1]
+                m_500crit[zoom_id] = MacsisDataset(data_handle).read_catalogue_subfindtab('FOF/Group_M_Crit500')[1]
+                r_500crit[zoom_id] = MacsisDataset(data_handle).read_catalogue_subfindtab('FOF/Group_R_Crit500')[1]
                 angular_momentum_hotgas_r500[zoom_id] = angular_momentum(data_handle, particle_type='gas')
                 angular_momentum_dark_matter_r500[zoom_id] = angular_momentum(data_handle, particle_type='dm')
                 angular_momentum_stars_r500[zoom_id] = angular_momentum(data_handle, particle_type='stars')
 
 
-
 if __name__ == "__main__":
-
     dump_to_hdf5_parallel()
