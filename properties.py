@@ -6,9 +6,7 @@ import numpy as np
 import argparse
 import pandas as pd
 from mpi4py import MPI
-from swiftsimio.visualisation.projection import scatter_parallel as scatter
 from swiftsimio.visualisation.rotation import rotation_matrix_from_vector
-from swiftsimio.visualisation.smoothing_length_generation import generate_smoothing_lengths
 
 # Make the register backend visible to the script
 sys.path.append(
@@ -229,6 +227,56 @@ def angular_momentum(halo, particle_type: str = 'gas'):
     return angular_momentum_r500
 
 
+def component_mass_r500(halo, particle_type: str = 'gas'):
+    # Switch the type of angular momentum analysis
+    if particle_type == 'gas':
+        pt_number = '0'
+    elif particle_type == 'dm':
+        pt_number = '1'
+    elif particle_type == 'stars':
+        pt_number = '4'
+
+    data = MacsisDataset(halo)
+
+    # Read data
+    coordinates = data.read_snapshot(f'PartType{pt_number}/Coordinates')
+    if particle_type == 'dm':
+        dm_particle_mass = data.read_header('MassTable')[1]
+        masses = np.ones(len(coordinates), dtype=np.float) * dm_particle_mass
+    else:
+        masses = data.read_snapshot(f'PartType{pt_number}/Mass')
+    velocities = data.read_snapshot(f'PartType{pt_number}/Velocity')
+
+    # Remember that the largest FOF has index 1
+    centre_of_potential = data.read_catalogue_subfindtab('FOF/GroupCentreOfPotential')[1]
+    r500_crit = data.read_catalogue_subfindtab('FOF/Group_R_Crit500')[1]
+
+    # Select ionised hot gas
+    if particle_type == 'gas':
+        temperatures = data.read_snapshot(f'PartType{pt_number}/Temperature')
+        temperature_cut = np.where(temperatures > 1.e5)[0]
+        coordinates = coordinates[temperature_cut]
+        masses = masses[temperature_cut]
+        velocities = velocities[temperature_cut]
+
+    # Rescale coordinates to CoP
+    coordinates[:, 0] -= centre_of_potential[0]
+    coordinates[:, 1] -= centre_of_potential[1]
+    coordinates[:, 2] -= centre_of_potential[2]
+
+    # Compute mean velocity inside R500
+    radial_dist = np.sqrt(
+        coordinates[:, 0] ** 2 +
+        coordinates[:, 1] ** 2 +
+        coordinates[:, 2] ** 2
+    )
+    r500_mask = np.where(radial_dist < r500_crit)[0]
+
+    total_mass_500 = np.sum(masses[r500_mask])
+
+    return total_mass_500
+
+
 def dump_to_hdf5_parallel():
     macsis = Macsis()
     with h5py.File(
@@ -254,9 +302,9 @@ def dump_to_hdf5_parallel():
 
         if rank == 0:
             print(
-                f"Redshift index (from argvals): {args.redshift_index:d}",
-                f"Handles working on redshift {zoom_handles[0].z:.3f}",
-                f"Analysing {len(data_handles):d} data-handles. Names printed below.",
+                f"Redshift index (from argvals): {args.redshift_index:d}\n"
+                f"Handles working on redshift {zoom_handles[0].z:.3f}\n"
+                f"Analysing {len(data_handles):d} data-handles. Names printed below.\n",
                 [data_handle.run_name for data_handle in data_handles]
             )
 
@@ -267,6 +315,10 @@ def dump_to_hdf5_parallel():
         halo_number = f.create_dataset("halo_number", (macsis.num_zooms,), dtype=np.uint16)
         m_500crit = f.create_dataset("m_500crit", (macsis.num_zooms,), dtype=np.float)
         r_500crit = f.create_dataset("r_500crit", (macsis.num_zooms,), dtype=np.float)
+
+        hot_gas_mass_500crit = f.create_dataset("hot_gas_mass_500crit", (macsis.num_zooms,), dtype=np.float)
+        dark_matter_mass_500crit = f.create_dataset("dark_matter_mass_500crit", (macsis.num_zooms,), dtype=np.float)
+        star_mass_500crit = f.create_dataset("star_mass_500crit", (macsis.num_zooms,), dtype=np.float)
 
         angular_momentum_hotgas_r500 = f.create_dataset(
             "angular_momentum_hotgas_r500", (macsis.num_zooms, 3), dtype=np.float
@@ -309,6 +361,10 @@ def dump_to_hdf5_parallel():
                 halo_number[zoom_id] = int(data_handle.run_name[-4:])
                 m_500crit[zoom_id] = MacsisDataset(data_handle).read_catalogue_subfindtab('FOF/Group_M_Crit500')[1]
                 r_500crit[zoom_id] = MacsisDataset(data_handle).read_catalogue_subfindtab('FOF/Group_R_Crit500')[1]
+
+                hot_gas_mass_500crit[zoom_id] = component_mass_r500(data_handle, particle_type='gas')
+                dark_matter_mass_500crit[zoom_id] = component_mass_r500(data_handle, particle_type='dm')
+                star_mass_500crit[zoom_id] = component_mass_r500(data_handle, particle_type='stars')
 
                 angular_momentum_hotgas_r500[zoom_id] = angular_momentum(data_handle, particle_type='gas')
                 angular_momentum_dark_matter_r500[zoom_id] = angular_momentum(data_handle, particle_type='dm')

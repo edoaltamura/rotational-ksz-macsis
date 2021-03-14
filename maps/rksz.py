@@ -3,6 +3,7 @@ import sys
 import unyt
 import h5py
 import numpy as np
+import argparse
 import pandas as pd
 from mpi4py import MPI
 from swiftsimio.visualisation.projection_backends import backends_parallel
@@ -27,6 +28,25 @@ rank = comm.rank
 
 from read import MacsisDataset
 from register import Macsis
+
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    '-p',
+    '--particle-type',
+    type=str,
+    default='gas',
+    required=True,
+    choices=['gas', 'dm']
+)
+parser.add_argument(
+    '-r',
+    '--redshift-index',
+    type=int,
+    default=22,
+    required=False,
+    choices=list(range(23))
+)
+args = parser.parse_args()
 
 ksz_const = - unyt.thompson_cross_section / 1.16 / unyt.speed_of_light / unyt.proton_mass
 tsz_const = unyt.thompson_cross_section * unyt.boltzmann_constant / 1.16 / \
@@ -138,9 +158,16 @@ def rksz_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
     h = np.asarray(h, dtype=np.float32)
     smoothed_map = scatter(x=x, y=y, m=m, h=h, res=resolution).T
 
-    # print(f"Smoothing lenghts: Mean {np.mean(smoothing_lengths)}, Std {np.std(smoothing_lengths)}")
+    # Parse info about smoothing lengths
+    smoothing_lengths_info = {
+        'smoothing_lengths_mean': np.nanmean(smoothing_lengths),
+        'smoothing_lengths_std': np.nanstd(smoothing_lengths),
+        'smoothing_lengths_median': np.nanmedian(smoothing_lengths),
+        'smoothing_lengths_max': np.nanmax(smoothing_lengths),
+        'smoothing_lengths_min': np.nanmin(smoothing_lengths),
+    }
 
-    return smoothed_map
+    return smoothed_map, smoothing_lengths_info
 
 
 def dm_rotation_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
@@ -225,31 +252,52 @@ def dm_rotation_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
     h = np.asarray(h, dtype=np.float32)
     smoothed_map = scatter(x=x, y=y, m=m, h=h, res=resolution).T
 
-    print(f"Smoothing lenghts: Mean {np.mean(smoothing_lengths)}, Std {np.std(smoothing_lengths)}")
+    # Parse info about smoothing lengths
+    smoothing_lengths_info = {
+        'smoothing_lengths_mean': np.nanmean(smoothing_lengths),
+        'smoothing_lengths_std': np.nanstd(smoothing_lengths),
+        'smoothing_lengths_median': np.nanmedian(smoothing_lengths),
+        'smoothing_lengths_max': np.nanmax(smoothing_lengths),
+        'smoothing_lengths_min': np.nanmin(smoothing_lengths),
+    }
 
-    return smoothed_map / 1.e10
+    return smoothed_map / 1.e10, smoothing_lengths_info
 
 
 def dump_to_hdf5_parallel(particle_type: str = 'gas', resolution: int = 1024):
     # Switch the type of map between gas and DM
-    generate_map = rksz_map if particle_type == 'gas' else dm_rotation_map
+    if particle_type == 'gas':
+        generate_map = rksz_map
+    elif particle_type == 'dm':
+        generate_map = dm_rotation_map
 
     macsis = Macsis()
-    with h5py.File(f'{macsis.output_dir}/rksz_{particle_type}.hdf5', 'w', driver='mpio', comm=comm) as f:
+    with h5py.File(
+            f'{macsis.output_dir}/rksz_{particle_type}_{args.redshift_index:03d}.hdf5', 'w',
+            driver='mpio', comm=comm
+    ) as f:
 
         # Retrieve all zoom handles in parallel (slow otherwise)
         data_handles = np.empty(0, dtype=np.object)
         for zoom_id in range(macsis.num_zooms):
             if zoom_id % num_processes == rank:
                 print(f"Collecting metadata for process ({zoom_id:03d}/{macsis.num_zooms - 1})...")
-                data_handles = np.append(data_handles, macsis.get_zoom(zoom_id).get_redshift(-1))
+                data_handles = np.append(
+                    data_handles,
+                    macsis.get_zoom(zoom_id).get_redshift(args.redshift_index)
+                )
 
         zoom_handles = comm.allgather(data_handles)
         zoom_handles = np.concatenate(zoom_handles).ravel()
         zoom_handles = zoom_handles[~pd.isnull(zoom_handles)]
 
         if rank == 0:
-            print([data_handle.run_name for data_handle in data_handles])
+            print(
+                f"Redshift index (from argvals): {args.redshift_index:d}\n"
+                f"Handles working on redshift {zoom_handles[0].z:.3f}\n"
+                f"Analysing {len(data_handles):d} data-handles. Names printed below.\n",
+                [data_handle.run_name for data_handle in data_handles]
+            )
 
         # Editing the structure of the file MUST be done collectively
         if rank == 0:
@@ -271,12 +319,23 @@ def dump_to_hdf5_parallel(particle_type: str = 'gas', resolution: int = 1024):
                     f"MACSIS name: {data_handle.run_name}"
                 ))
                 for projection in ['x', 'y', 'z', 'faceon', 'edgeon']:
+
                     # Check that the arrays is not all zeros
                     if not np.any(f[f"{data_handle.run_name}/map_{projection}"][:]):
-                        rksz = generate_map(data_handle, resolution=resolution, alignment=projection)
-                        f[f"{data_handle.run_name}/map_{projection}"][:] = rksz
+                        smoothed_map, smoothing_length_info = generate_map(
+                            data_handle,
+                            resolution=resolution,
+                            alignment=projection
+                        )
+                        f[f"{data_handle.run_name}/map_{projection}"][:] = smoothed_map
+
+                # Write attributes to hdf5 group
+                for info_name in smoothing_length_info:
+                    f[f"{data_handle.run_name}"].attrs.create(
+                        info_name,
+                        smoothing_length_info[smoothing_length_info]
+                    )
 
 
 if __name__ == "__main__":
-    # dump_to_hdf5_parallel('gas', resolution=1024)
-    dump_to_hdf5_parallel('dm', resolution=1024)
+    dump_to_hdf5_parallel(args.particle_type, resolution=1024)
