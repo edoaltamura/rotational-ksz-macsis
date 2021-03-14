@@ -60,7 +60,11 @@ def angular_momentum(halo, particle_type: str = 'gas'):
 
     # Read data
     coordinates = data.read_snapshot(f'PartType{pt_number}/Coordinates')
-    masses = data.read_snapshot(f'PartType{pt_number}/Mass')
+    if particle_type == 'dm':
+        dm_particle_mass = data.read_header('MassTable')[1]
+        masses = np.ones(len(coordinates), dtype=np.float) * dm_particle_mass
+    else:
+        masses = data.read_snapshot(f'PartType{pt_number}/Mass')
     velocities = data.read_snapshot(f'PartType{pt_number}/Velocity')
 
     # Remember that the largest FOF has index 1
