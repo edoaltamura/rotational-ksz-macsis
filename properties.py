@@ -117,7 +117,7 @@ def dump_to_hdf5_parallel():
         zoom_handles = np.concatenate(zoom_handles).ravel()
         zoom_handles = zoom_handles[~pd.isnull(zoom_handles)]
         sort_keys = np.argsort(np.array([int(z.run_name[-4:]) for z in zoom_handles]))
-        zoom_handles = sort_keys[sort_keys]
+        zoom_handles = zoom_handles[sort_keys]
 
         if rank == 0:
             print([data_handle.run_name for data_handle in data_handles])
@@ -144,7 +144,7 @@ def dump_to_hdf5_parallel():
             if zoom_id % num_processes == rank:
                 print((
                     f"Rank {rank:03d} processing halo ({zoom_id:03d}/{macsis.num_zooms - 1}) | "
-                    f"MACSIS name: {data_handle}"
+                    f"MACSIS name: {data_handle.run_name}"
                 ))
 
                 names[zoom_id] = int(data_handle.run_name[-4:])
