@@ -129,13 +129,13 @@ def dump_to_hdf5_parallel():
         m_500crit = f.create_dataset("m_500crit", (macsis.num_zooms,), dtype=np.float)
         r_500crit = f.create_dataset("r_500crit", (macsis.num_zooms,), dtype=np.float)
         angular_momentum_hotgas_r500 = f.create_dataset(
-            "angular_momentum_hotgas_r500", (macsis.num_zooms,), dtype=np.float
+            "angular_momentum_hotgas_r500", (macsis.num_zooms, 3), dtype=np.float
         )
         angular_momentum_dark_matter_r500 = f.create_dataset(
-            "angular_momentum_dark_matter_r500", (macsis.num_zooms,), dtype=np.float
+            "angular_momentum_dark_matter_r500", (macsis.num_zooms, 3), dtype=np.float
         )
         angular_momentum_stars_r500 = f.create_dataset(
-            "angular_momentum_stars_r500", (macsis.num_zooms,), dtype=np.float
+            "angular_momentum_stars_r500", (macsis.num_zooms, 3), dtype=np.float
         )
 
         # Data assignment can be done through independent operations
