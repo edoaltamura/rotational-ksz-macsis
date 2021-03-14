@@ -3,6 +3,7 @@ import sys
 import unyt
 import h5py
 import numpy as np
+import argparse
 import pandas as pd
 from mpi4py import MPI
 from swiftsimio.visualisation.projection import scatter_parallel as scatter
@@ -25,6 +26,17 @@ rank = comm.rank
 
 from read import MacsisDataset
 from register import Macsis
+
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    '-r',
+    '--redshift-index',
+    type=int,
+    default=22,
+    required=False,
+    choices=list(range(23))
+)
+args = parser.parse_args()
 
 ksz_const = - unyt.thompson_cross_section / 1.16 / unyt.speed_of_light / unyt.proton_mass
 tsz_const = unyt.thompson_cross_section * unyt.boltzmann_constant / 1.16 / \
@@ -219,14 +231,20 @@ def angular_momentum(halo, particle_type: str = 'gas'):
 
 def dump_to_hdf5_parallel():
     macsis = Macsis()
-    with h5py.File(f'{macsis.output_dir}/properties.hdf5', 'w', driver='mpio', comm=comm) as f:
+    with h5py.File(
+            f'{macsis.output_dir}/properties_{args.redshift_index:03d}.hdf5', 'w',
+            driver='mpio', comm=comm
+    ) as f:
 
         # Retrieve all zoom handles in parallel (slow otherwise)
         data_handles = np.empty(0, dtype=np.object)
         for zoom_id in range(macsis.num_zooms):
             if zoom_id % num_processes == rank:
                 print(f"Collecting metadata for process ({zoom_id:03d}/{macsis.num_zooms - 1})...")
-                data_handles = np.append(data_handles, macsis.get_zoom(zoom_id).get_redshift(-1))
+                data_handles = np.append(
+                    data_handles,
+                    macsis.get_zoom(zoom_id).get_redshift(args.redshift_index)
+                )
 
         zoom_handles = comm.allgather(data_handles)
         zoom_handles = np.concatenate(zoom_handles).ravel()
@@ -235,13 +253,18 @@ def dump_to_hdf5_parallel():
         zoom_handles = zoom_handles[sort_keys]
 
         if rank == 0:
-            print([data_handle.run_name for data_handle in data_handles])
+            print(
+                f"Redshift index (from argvals): {args.redshift_index:d}",
+                f"Handles working on redshift {zoom_handles[0].z:.3f}",
+                f"Analysing {len(data_handles):d} data-handles. Names printed below.",
+                [data_handle.run_name for data_handle in data_handles]
+            )
 
         # Editing the structure of the file MUST be done collectively
         if rank == 0:
             print("Preparing structure of the file (collective operations)...")
 
-        names = f.create_dataset("names", (macsis.num_zooms,), dtype=np.str)
+        halo_number = f.create_dataset("halo_number", (macsis.num_zooms,), dtype=np.uint16)
         m_500crit = f.create_dataset("m_500crit", (macsis.num_zooms,), dtype=np.float)
         r_500crit = f.create_dataset("r_500crit", (macsis.num_zooms,), dtype=np.float)
 
@@ -283,7 +306,7 @@ def dump_to_hdf5_parallel():
                     f"MACSIS name: {data_handle.run_name}"
                 ))
 
-                names[zoom_id] = data_handle.run_name
+                halo_number[zoom_id] = int(data_handle.run_name[-4:])
                 m_500crit[zoom_id] = MacsisDataset(data_handle).read_catalogue_subfindtab('FOF/Group_M_Crit500')[1]
                 r_500crit[zoom_id] = MacsisDataset(data_handle).read_catalogue_subfindtab('FOF/Group_R_Crit500')[1]
 
