@@ -81,8 +81,8 @@ def rksz_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
     smoothing_lengths = data.read_snapshot('PartType0/SmoothingLength')
 
     # Remember that the largest FOF has index 1
-    centre_of_potential = data.read_catalogue_subfindtab('FOF/GroupCentreOfPotential')[1]
-    r500_crit = data.read_catalogue_subfindtab('FOF/Group_R_Crit500')[1]
+    centre_of_potential = data.read_catalogue_subfindtab('FOF/GroupCentreOfPotential')[1] / data.a
+    r500_crit = data.read_catalogue_subfindtab('FOF/Group_R_Crit500')[1] / data.a
     m500_crit = data.read_catalogue_subfindtab('FOF/Group_M_Crit500')[1]
 
     # Select ionised hot gas
@@ -178,8 +178,8 @@ def dm_rotation_map(halo, resolution: int = 1024, alignment: str = 'edgeon'):
     velocities = data.read_snapshot('PartType1/Velocity')
 
     # Remember that the largest FOF has index 1
-    centre_of_potential = data.read_catalogue_subfindtab('FOF/GroupCentreOfPotential')[1]
-    r500_crit = data.read_catalogue_subfindtab('FOF/Group_R_Crit500')[1]
+    centre_of_potential = data.read_catalogue_subfindtab('FOF/GroupCentreOfPotential')[1] / data.a
+    r500_crit = data.read_catalogue_subfindtab('FOF/Group_R_Crit500')[1] / data.a
     m500_crit = data.read_catalogue_subfindtab('FOF/Group_M_Crit500')[1]
 
     # Generate smoothing lengths for dark matter

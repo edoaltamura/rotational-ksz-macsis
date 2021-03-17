@@ -78,8 +78,8 @@ def mean_velocity(halo, particle_type: str = 'gas'):
     velocities = data.read_snapshot(f'PartType{pt_number}/Velocity')
 
     # Remember that the largest FOF has index 1
-    centre_of_potential = data.read_catalogue_subfindtab('FOF/GroupCentreOfPotential')[1]
-    r500_crit = data.read_catalogue_subfindtab('FOF/Group_R_Crit500')[1]
+    centre_of_potential = data.read_catalogue_subfindtab('FOF/GroupCentreOfPotential')[1] / data.a
+    r500_crit = data.read_catalogue_subfindtab('FOF/Group_R_Crit500')[1] / data.a
 
     # Select ionised hot gas
     if particle_type == 'gas':
@@ -128,8 +128,8 @@ def velocity_dispersion(halo, particle_type: str = 'gas'):
     velocities = data.read_snapshot(f'PartType{pt_number}/Velocity')
 
     # Remember that the largest FOF has index 1
-    centre_of_potential = data.read_catalogue_subfindtab('FOF/GroupCentreOfPotential')[1]
-    r500_crit = data.read_catalogue_subfindtab('FOF/Group_R_Crit500')[1]
+    centre_of_potential = data.read_catalogue_subfindtab('FOF/GroupCentreOfPotential')[1] / data.a
+    r500_crit = data.read_catalogue_subfindtab('FOF/Group_R_Crit500')[1] / data.a
 
     # Select ionised hot gas
     if particle_type == 'gas':
@@ -190,8 +190,8 @@ def angular_momentum(halo, particle_type: str = 'gas'):
     velocities = data.read_snapshot(f'PartType{pt_number}/Velocity')
 
     # Remember that the largest FOF has index 1
-    centre_of_potential = data.read_catalogue_subfindtab('FOF/GroupCentreOfPotential')[1]
-    r500_crit = data.read_catalogue_subfindtab('FOF/Group_R_Crit500')[1]
+    centre_of_potential = data.read_catalogue_subfindtab('FOF/GroupCentreOfPotential')[1] / data.a
+    r500_crit = data.read_catalogue_subfindtab('FOF/Group_R_Crit500')[1] / data.a
 
     # Select ionised hot gas
     if particle_type == 'gas':
@@ -248,8 +248,8 @@ def component_mass_r500(halo, particle_type: str = 'gas'):
     velocities = data.read_snapshot(f'PartType{pt_number}/Velocity')
 
     # Remember that the largest FOF has index 1
-    centre_of_potential = data.read_catalogue_subfindtab('FOF/GroupCentreOfPotential')[1]
-    r500_crit = data.read_catalogue_subfindtab('FOF/Group_R_Crit500')[1]
+    centre_of_potential = data.read_catalogue_subfindtab('FOF/GroupCentreOfPotential')[1] / data.a
+    r500_crit = data.read_catalogue_subfindtab('FOF/Group_R_Crit500')[1] / data.a
 
     # Select ionised hot gas
     if particle_type == 'gas':
@@ -360,7 +360,7 @@ def dump_to_hdf5_parallel():
 
                 halo_number[zoom_id] = int(data_handle.run_name[-4:])
                 m_500crit[zoom_id] = MacsisDataset(data_handle).read_catalogue_subfindtab('FOF/Group_M_Crit500')[1]
-                r_500crit[zoom_id] = MacsisDataset(data_handle).read_catalogue_subfindtab('FOF/Group_R_Crit500')[1]
+                r_500crit[zoom_id] = MacsisDataset(data_handle).read_catalogue_subfindtab('FOF/Group_R_Crit500')[1] / MacsisDataset(data_handle).a
 
                 hot_gas_mass_500crit[zoom_id] = component_mass_r500(data_handle, particle_type='gas')
                 dark_matter_mass_500crit[zoom_id] = component_mass_r500(data_handle, particle_type='dm')
