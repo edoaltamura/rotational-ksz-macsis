@@ -12,6 +12,7 @@ A repository for suppelementary material from my publications on the rkSZ effect
 
 #### Data products from the study by [Altamura et al. (2023)](https://ui.adsabs.harvard.edu/abs/2023arXiv230207936A/abstract)
 
+![Analytic template for an rkSZ profile](img/map_model.png)
 
 ## Citation guideline
 When using data products or code from this repository, and the results or insights derived from it, please cite [Altamura et al. (2023)](https://ui.adsabs.harvard.edu/abs/2023arXiv230207936A/abstract). We recommend using the [citation styles provided in ADS](https://ui.adsabs.harvard.edu/abs/2023arXiv230207936A/exportcitation) for the most up-to-date version.
