@@ -8,9 +8,11 @@
 
 # Rotational kinetic SZ effect in MACSIS clusters
 
-A repository for suppelementary material from my publications on the rkSZ effect, and a collection of analysis tools for the MACSIS cosmological simulations (Barnes et al., 2017).
-
 #### Data products from the study by [Altamura et al. (2023)](https://ui.adsabs.harvard.edu/abs/2023arXiv230207936A/abstract)
+
+
+A repository for suppelementary material from my publications on the rkSZ effect, and a collection of analysis tools for the MACSIS cosmological simulations ([Barnes et al., 2017](https://ui.adsabs.harvard.edu/abs/2017MNRAS.465..213B/abstract)).
+
 
 
 
