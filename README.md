@@ -11,3 +11,9 @@
 A repository for suppelementary material from my publications on the rkSZ effect, and a collection of analysis tools for the MACSIS cosmological simulations (Barnes et al., 2017).
 
 #### Data products from the study by [Altamura et al. (2023)](https://ui.adsabs.harvard.edu/abs/2023arXiv230207936A/abstract)
+
+
+## Citation guideline
+When using data products or code from this repository, and the results or insights derived from it, please cite [Altamura et al. (2023)](https://ui.adsabs.harvard.edu/abs/2023arXiv230207936A/abstract). We recommend using the [citation styles provided in ADS](https://ui.adsabs.harvard.edu/abs/2023arXiv230207936A/exportcitation) for the most up-to-date version.
+
+When using the non-thermal gas fractions for the MACSIS sample as a cluster property, cite [Towler et al. (2022)](https://ui.adsabs.harvard.edu/abs/2022arXiv221101239T/abstract).
