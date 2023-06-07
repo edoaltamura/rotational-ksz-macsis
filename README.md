@@ -15,7 +15,7 @@ A repository for suppelementary material from my publications on the rkSZ effect
 
 
 
-![Analytic template for an rkSZ profile](img/map_model.png)
+![Overview of the MACSIS 0 cluster](img/map_with_vectors_0.png)
 
 
 
